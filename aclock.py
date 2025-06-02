@@ -82,7 +82,6 @@ class AlarmClock:
         self.encoder_seesaw = Seesaw(self.i2c, addr=0x36)
         self.encoder = rotaryio.IncrementalEncoder(self.encoder_seesaw)
         self.encoder_button = digitalio.DigitalIO(self.encoder_seesaw, 24)
-        self.encoder_button.pull = digitalio.Pull.UP
         self.last_encoder_position = self.encoder.position
         self.last_encoder_button = self.encoder_button.value
         self.encoder_button_down = False
