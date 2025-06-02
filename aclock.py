@@ -11,14 +11,12 @@ from datetime import datetime as dt
 from adafruit_ht16k33.segments import Seg7x4
 from adafruit_ht16k33.segments import Seg14x4
 from gpiozero import Button, DigitalInputDevice, DigitalOutputDevice
-from rotary_class_jsl import RotaryEncoder
+from adafruit_seesaw.seesaw import Seesaw
+from adafruit_seesaw import rotaryio, digitalio
 import logging
 import board
 import busio
 import json
-# Add imports for Stemma QT rotary encoder
-from adafruit_seesaw.seesaw import Seesaw
-from adafruit_seesaw import rotaryio, digitalio
 
 class AlarmClock:
     """
@@ -287,7 +285,8 @@ class AlarmClock:
         debug_lines = []
         debug_lines.append(f"alarm_settings_callback called with channel={channel} alarm_state={self.alarm_settings_state}, display_state={self.display_settings_state}, alarm_set={self.alarm_set}")
         # Only act on BUTTONUP (button release)
-        if channel != RotaryEncoder.BUTTONUP:
+        # Remove RotaryEncoder.BUTTONUP reference, use 1 for BUTTONUP
+        if channel != 1:
             debug_lines.append("alarm_settings_callback: Ignored, not BUTTONUP")
             print("\n".join(debug_lines), end="\n")
             return
@@ -329,7 +328,8 @@ class AlarmClock:
         debug_lines = []
         debug_lines.append(f"display_settings_callback called with channel={channel} display_state={self.display_settings_state}, alarm_set={self.alarm_set}, aux_set={self.display_set}")
         # Only act on BUTTONUP (button release)
-        if channel != RotaryEncoder.BUTTONUP:
+        # Remove RotaryEncoder.BUTTONUP reference, use 1 for BUTTONUP
+        if channel != 1:
             return
         if self.display_settings_state == 1:
             debug_lines.append("display_settings_callback: Entering display mode")
