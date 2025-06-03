@@ -59,6 +59,10 @@ class AlarmClock:
         self.alarm_settings_button = Button(13, pull_up=True, bounce_time=0.08)
         self.display_settings_button = Button(21, pull_up=True, bounce_time=0.08)
 
+        # Attach callbacks for alarm and display settings buttons
+        self.alarm_settings_button.when_released = lambda: self.alarm_settings_callback(1)
+        self.display_settings_button.when_released = lambda: self.display_settings_callback(1)
+
         # Define EDS GPIO input and output pins and setup gpiozero devices
         self.trig_pin = 5
         self.echo_pin = 22
