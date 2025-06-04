@@ -3,7 +3,15 @@
 # Issues and todo: alarm pre-selects, auto alarm repeat, issues with dimLevel 0 line 402 auto time setting conflict with manual off
 #   , display override move to display functions? LED blinking when after 8PM
 # 20171118
-# 20250531
+# 20250604
+
+# I2C addresses:
+#   0x70 - 14x4 alphanumeric display
+#   0x72 - 7x4 numeric display
+#   0x36 - Stemma QT rotary encoder
+#   0x39 - IR, Proximity & Gesture Sensor
+#   0x3A - LED Arcade Button 1x4
+
 import os
 import time
 import datetime
