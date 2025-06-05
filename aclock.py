@@ -97,20 +97,12 @@ class AlarmClock:
         # Switch 1 (yellow): Display settings, Switch 2 (white): Alarm settings
         self.arcade_button_pins = [18, 19]  # 18: yellow, 19: white
         self.arcade_led_pins = [12, 13]     # 12: yellow, 13: white
-        # Set up digitalio for buttons
-        self.arcade_buttons = []
-        for pin in self.arcade_button_pins:
-            btn = DigitalIO(self.arcade_button, pin)
-            btn.direction = digitalio.Direction.INPUT
-            btn.pull = digitalio.Pull.UP
-            self.arcade_buttons.append(btn)
-        # Set up digitalio for LEDs
-        self.arcade_leds = []
-        for pin in self.arcade_led_pins:
-            led = DigitalIO(self.arcade_button, pin)
-            led.direction = digitalio.Direction.OUTPUT
-            led.value = False
-            self.arcade_leds.append(led)
+        # Set up digitalio for buttons (no direction/pull, just DigitalIO as in button.py)
+        self.arcade_buttons = [DigitalIO(self.arcade_button, pin) for pin in self.arcade_button_pins]
+        # Set up digitalio for LEDs (no direction, just DigitalIO as in button.py)
+        self.arcade_leds = [DigitalIO(self.arcade_button, pin) for pin in self.arcade_led_pins]
+        for led in self.arcade_leds:
+            led.value = False  # LEDs off initially
         # Track last button state for edge detection
         self.last_arcade_button_states = [btn.value for btn in self.arcade_buttons]
 
