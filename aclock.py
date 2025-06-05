@@ -23,7 +23,7 @@ from adafruit_seesaw.seesaw import Seesaw
 from adafruit_seesaw import rotaryio, digitalio
 from adafruit_seesaw.digitalio import DigitalIO
 from adafruit_seesaw.pwmout import PWMOut
-import digitalio
+#import digitalio
 import logging
 import board
 import busio
@@ -89,7 +89,7 @@ class AlarmClock:
         # Initialize Stemma QT rotary encoder (default I2C address 0x36)
         self.encoder_seesaw = Seesaw(self.i2c, addr=0x36)
         self.encoder = rotaryio.IncrementalEncoder(self.encoder_seesaw)
-        self.encoder_button = digitalio.DigitalIO(self.encoder_seesaw, 24)
+        self.encoder_button = DigitalIO(self.encoder_seesaw, 24)
         self.last_encoder_position = self.encoder.position
         self.last_encoder_button = self.encoder_button.value
         self.encoder_button_down = False
