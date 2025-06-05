@@ -28,10 +28,6 @@ import logging
 import board
 import busio
 import json
-from adafruit_seesaw.digitalio import DigitalIO
-
-# Add import for Adafruit LED Arcade Button 1x4 STEMMA QT
-from adafruit_seesaw.seesaw import Seesaw
 
 class AlarmClock:
     """
