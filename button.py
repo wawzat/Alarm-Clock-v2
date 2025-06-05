@@ -29,13 +29,18 @@ leds = [PWMOut(arcade, pin) for pin in LED_PINS]
 print("Press the yellow or white arcade button (Ctrl+C to exit)...")
 
 try:
+    last_press = [0, 0]
+    debounce_time = 0.15  # 150 ms debounce
     while True:
+        now = time.monotonic()
         for idx, button in enumerate(buttons):
             if not button.value:  # Button is active low
-                if idx == 0:
-                    print("Yellow button pressed")
-                elif idx == 1:
-                    print("white button pressed")
+                if now - last_press[idx] > debounce_time:
+                    if idx == 0:
+                        print("Yellow button pressed")
+                    elif idx == 1:
+                        print("white button pressed")
+                    last_press[idx] = now
                 # Pulse the LED while pressed
                 for cycle in range(0, 65535, 8000):
                     leds[idx].duty_cycle = cycle
