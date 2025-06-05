@@ -110,7 +110,9 @@ class AlarmClock:
             led.switch_to_output(value=False)
         # Ensure arcade button pins are set as input (fixes false press detection)
         for btn in self.arcade_buttons:
-            btn.switch_to_input(pull=True)  # Enable pull-up resistor
+            btn.switch_to_input(pull=True)
+        # Wait for I2C/Seesaw to settle and read initial button states after pull-ups are set
+        time.sleep(0.1)
         self.last_arcade_button_states = [btn.value for btn in self.arcade_buttons]
 
         # Audio feature flag
