@@ -107,8 +107,7 @@ class AlarmClock:
         self.arcade_buttons = [digitalio.DigitalIO(self.arcade_button, pin) for pin in self.arcade_button_pins]
         self.arcade_leds = [digitalio.DigitalIO(self.arcade_button, pin) for pin in self.arcade_led_pins]
         for led in self.arcade_leds:
-            led.direction = 1  # output
-            led.value = False  # LEDs off initially
+            led.switch_to_output(value=False)  # Correct way to set as output and turn off
         # Track last button state for edge detection
         self.last_arcade_button_states = [btn.value for btn in self.arcade_buttons]
 
