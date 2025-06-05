@@ -3,7 +3,7 @@
 # Issues and todo: alarm pre-selects, auto alarm repeat, issues with dimLevel 0 line 402 auto time setting conflict with manual off
 #   , display override move to display functions? LED blinking when after 8PM
 # 20171118
-# 20250604
+# 20250605
 
 # I2C addresses:
 #   0x70 - 14x4 alphanumeric display
@@ -18,13 +18,16 @@ import datetime
 from datetime import datetime as dt
 from adafruit_ht16k33.segments import Seg7x4
 from adafruit_ht16k33.segments import Seg14x4
-from gpiozero import Button, DigitalInputDevice, DigitalOutputDevice
+from gpiozero import DigitalInputDevice, DigitalOutputDevice
 from adafruit_seesaw.seesaw import Seesaw
 from adafruit_seesaw import rotaryio, digitalio
 import logging
 import board
 import busio
 import json
+
+# Add import for Adafruit LED Arcade Button 1x4 STEMMA QT
+from adafruit_seesaw.seesaw import Seesaw
 
 class AlarmClock:
     """
@@ -64,12 +67,8 @@ class AlarmClock:
         # self.rswitch = RotaryEncoder(...)
 
         # Stand-alone alarm and display settings buttons remain
-        self.alarm_settings_button = Button(13, pull_up=True, bounce_time=0.08)
-        self.display_settings_button = Button(21, pull_up=True, bounce_time=0.08)
-
-        # Attach callbacks for alarm and display settings buttons
-        self.alarm_settings_button.when_released = lambda: self.alarm_settings_callback(1)
-        self.display_settings_button.when_released = lambda: self.display_settings_callback(1)
+        # self.alarm_settings_button = Button(13, pull_up=True, bounce_time=0.08)
+        # self.display_settings_button = Button(21, pull_up=True, bounce_time=0.08)
 
         # Define EDS GPIO input and output pins and setup gpiozero devices
         self.trig_pin = 5
@@ -98,6 +97,20 @@ class AlarmClock:
         self.last_encoder_button = self.encoder_button.value
         self.encoder_button_down = False
         self.encoder_button_up = False
+
+        # Initialize I2C for Arcade Button 1x4 (address 0x3A)
+        self.arcade_button = Seesaw(self.i2c, addr=0x3A)
+        # Button pins: 18, 19, 20, 2 (per Adafruit docs)
+        self.arcade_button_pins = [18, 19, 20, 2]
+        self.arcade_led_pins = [14, 15, 16, 17]
+        # Set up digitalio for buttons and LEDs
+        self.arcade_buttons = [digitalio.DigitalIO(self.arcade_button, pin) for pin in self.arcade_button_pins]
+        self.arcade_leds = [digitalio.DigitalIO(self.arcade_button, pin) for pin in self.arcade_led_pins]
+        for led in self.arcade_leds:
+            led.direction = 1  # output
+            led.value = False  # LEDs off initially
+        # Track last button state for edge detection
+        self.last_arcade_button_states = [btn.value for btn in self.arcade_buttons]
 
         # Audio feature flag
         self.use_audio = False  # Set to True to enable audio features
@@ -563,6 +576,30 @@ class AlarmClock:
             self.encoder_button_down = False
         self.last_encoder_button = button
 
+    def poll_arcade_buttons(self):
+        """
+        Poll the Adafruit LED Arcade Button 1x4 for button presses and handle display/alarm settings.
+        Switch 1: Display settings, Switch 2: Alarm settings.
+        """
+        # Button 0: Display settings, Button 1: Alarm settings
+        for idx, btn in enumerate(self.arcade_buttons[:2]):
+            current = btn.value
+            last = self.last_arcade_button_states[idx]
+            # Button is active low: pressed == False
+            if not current and last:  # Button down event
+                if idx == 0:
+                    self.display_settings_callback(1)
+                    self.arcade_leds[0].value = True  # Turn on LED 1
+                elif idx == 1:
+                    self.alarm_settings_callback(1)
+                    self.arcade_leds[1].value = True  # Turn on LED 2
+            elif current and not last:  # Button up event
+                if idx == 0:
+                    self.arcade_leds[0].value = False  # Turn off LED 1
+                elif idx == 1:
+                    self.arcade_leds[1].value = False  # Turn off LED 2
+            self.last_arcade_button_states[idx] = current
+
     def brightness(self, auto_dim, alarm_stat, display_mode, now):
         """
         Determine the display mode based on auto dim, alarm status, and current time.
@@ -896,6 +933,8 @@ class AlarmClock:
             self.check_alarm(now)
         # Poll the rotary encoder each loop
         self.poll_rotary_encoder()
+        # Poll arcade buttons each loop
+        self.poll_arcade_buttons()
 
     def run(self):
         """
