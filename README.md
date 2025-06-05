@@ -54,27 +54,26 @@ The alarm clock is controlled using a rotary encoder (with push button) and two 
 - **Wake Display:** If the display is off, wave your hand in front of the EDS sensor to temporarily wake it.
 
 ### Persistent Storage
-- **Automatic Saving:** Alarm and display settings (such as alarm time, alarm status, brightness, alarm track, volume, and display override) are automatically saved to persistent storage. Your settings will be restored after a power cycle or reboot.
+- **Automatic Saving:** Alarm and display settings (such as alarm time, alarm status, brightness, alarm track, volume, and display override) are automatically saved to persistent storage. Settings are restored after a power cycle or reboot.
 
 ### Notes
-- All settings and states are displayed on the alphanumeric display for clarity.
+- All settings and states are displayed on the alphanumeric display.
 - For more details on wiring, setup, or troubleshooting, see the rest of this README or the code comments.
 
 ## Parts List
-1. 1 x Raspberry Pi Model 2 w/ SD Card
-2. 1 x USB power supply for Raspberry Pi
-3. 1 x Adafruit 1.2" 4-Digit 7-Segment Display w/I2C Backpack - Yellow. Product ID: 1269
-4. 1 x Adafruit Quad Alphanumeric Display - Red 0.54" Digits w/ I2C Backpack - STEMMA QT / Qwiic. Product ID: 1911
-5. 1 x Adafruit I2C Stemma QT Rotary Encoder Breakout with Encoder - STEMMA QT / Qwiic PN 5880
-6. 1 x HC-SR04 Ultrasonic Distance Sensor
-7. 1 x Sparkfun Logic Level Converter - Bi-Directional. PN BOB-12009
-8. 2 x Sparkfun Mini Pushbutton Switch. PN COM-00097
-9. 1 x Adafruit T-Cobbler Plus. Product ID: 2028
-10. 4 x 2P 0.1" Pitch PCB Mount Screw Terminal Block
-11. 1 x 3P 0.1" Pitch PCB Mount Screw Terminal Block
-12. 1 x BusBoard Prototype Systems Breadboard. PN BB830
-13. Various jumper wires
-14. iHome iM60LT Rechargeable Mini Speaker - Blue
-
-
-
+1. 1 x Raspberry Pi Model Zero 2 W
+2. 1 x SparkFun Qwiic pHAT v2.0 for Raspberry Pi - STEMMA QT / Qwiic PID: 5142
+3. 1 x USB power supply for Raspberry Pi
+4. 1 x Adafruit 1.2" 4-Digit 7-Segment Display w/I2C Backpack - Yellow. Product ID: 1269
+5. 1 x Adafruit Quad Alphanumeric Display - Red 0.54" Digits w/ I2C Backpack - STEMMA QT / Qwiic. Product ID: 1911
+6. 1 x Adafruit I2C Stemma QT Rotary Encoder Breakout with Encoder - STEMMA QT / Qwiic PN 5880
+7. 1 x Adafruit APDS9960 Proximity, Light, RGB, and Gesture Sensor - STEMMA QT / Qwiic PID: 3595
+8. 1 x Adafruit LED Arcade Button 1x4 - STEMMA QT I2C Breakout - STEMMA QT / Qwiic PID: 5296
+9. 1 x Mini LED Arcade Button - 24mm Translucent Clear PID: 3429
+10. 1 x Mini LED Arcade Button - 24mm Translucent Yellow PID: 3431
+11. 4 x Arcade Button Quick-Connect Wire Pairs - 0.11" Product ID: 1152
+12. 3 x 7" male x male Stemma QT cable
+13. 1 x 6" male x female DuPont connector Stemma QT cable
+14. 1 x 6" male x female DuPont connector Stemma QT cable modified with additional DuPont female connector.
+15. 1 x 6" DuPont female x 0.1" pin (for 7-Segment 5v power)
+16. iHome iM60LT Rechargeable Mini Speaker - Blue
