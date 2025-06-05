@@ -95,7 +95,7 @@ class AlarmClock:
         # I2C address for Adafruit LED Arcade Button 1x4
         self.last_state = [True, True]  # True means not pressed (pull-up)
         self.last_press = [0, 0]
-        self.debounce_time = 0.2  # 200 ms debounce
+        self.debounce_time = 0.25  # 250 ms debounce
         self.ARCADE_BUTTON_ADDR = 0x3A
         # Button pins: 18 (yellow), 19 (white)
         self.BUTTON_PINS = (18, 19)
