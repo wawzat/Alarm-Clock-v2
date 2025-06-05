@@ -23,7 +23,7 @@ from adafruit_seesaw.seesaw import Seesaw
 from adafruit_seesaw import rotaryio, digitalio
 from adafruit_seesaw.digitalio import DigitalIO
 from adafruit_seesaw.pwmout import PWMOut
-#import digitalio
+import digitalio
 import logging
 import board
 import busio
