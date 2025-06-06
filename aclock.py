@@ -574,7 +574,7 @@ class AlarmClock:
         Poll the Adafruit LED Arcade Button 1x4 for button presses and handle display/alarm settings.
         Switch 1 (yellow): Display settings, Switch 2 (white): Alarm settings.
         Also turns off a ringing or snoozed alarm when either button is pressed.
-        If used to turn off a ringing/snoozed alarm, do NOT show the alphanumeric display.
+        If used to turn off a ringing/snoozed alarm, do NOT show the alphanumeric display or clear the numeric display.
         """
         now = time.monotonic()
         for idx, btn in enumerate(self.arcade_buttons):
@@ -586,17 +586,13 @@ class AlarmClock:
                         self.alarm_ringing = 0
                         self.alarm_stat = "OFF"
                         self.sleep_state = "OFF"
-                        # Immediately clear displays to stop RING, but do NOT show alphanumeric display
+                        # Immediately clear only the alphanumeric display to stop RING, but do NOT show it or clear the numeric display
                         self.alpha_display.fill(0)
                         try:
                             self.alpha_display.show()
                         except Exception as e:
                             self.logger.error("alpha_display.show() error: %s", str(e))
-                        self.num_display.fill(0)
-                        try:
-                            self.num_display.show()
-                        except Exception as e:
-                            self.logger.error("num_display.show() error: %s", str(e))
+                        # Do NOT clear or update the numeric display here
                         # Do NOT call display_settings_callback or alarm_settings_callback in this case
                     else:
                         if idx == 0:
