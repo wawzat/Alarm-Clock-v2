@@ -3,3 +3,4 @@ adafruit-circuitpython-ht16k33
 pyalsaaudio
 gpiozero
 adafruit-circuitpython-seesaw
+adafruit-circuitpython-apds9960
