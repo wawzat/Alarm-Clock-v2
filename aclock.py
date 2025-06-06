@@ -28,7 +28,6 @@ import logging
 import board
 import busio
 import json
-from adafruit_apds9960.apds9960 import APDS9960
 
 class AlarmClock:
     """
@@ -63,6 +62,17 @@ class AlarmClock:
 
         # Remove rotary encoder GPIO and rotary_class_jsl
         # Remove all references to DigitalInputDevice, DigitalOutputDevice, Button for alarm/display settings
+
+        # Define EDS GPIO input and output pins and setup gpiozero devices
+        self.trig_pin = 5
+        self.echo_pin = 22
+        self.trig = DigitalOutputDevice(self.trig_pin)
+        self.echo = DigitalInputDevice(self.echo_pin)
+
+        # Pulse EDS and wait for sensor to settle
+        self.trig.off()
+        print("Waiting For Sensor To Settle")
+        time.sleep(2)
 
         # Define increment for alarm minute adjustment
         self.minute_incr = 1
@@ -134,7 +144,8 @@ class AlarmClock:
         self.alarm_track = 1
         self.vol_level = 65
         self.alarm_tracks = {1: '01.mp3', 2: '02.mp3', 3: '03.mp3', 4: '04.mp3', 5: '05.mp3', 6: '06.mp3'}
-        self.auto_dim = "ON"  # Auto dim feature flag
+        self.distance = 0
+        self.auto_dim = "ON"
         self.loop_count = 0
         self.debug = "NO"
 
@@ -170,11 +181,6 @@ class AlarmClock:
         self.last_alpha_message = None
         self.last_alpha_brightness = None
         self.last_alpha_type = None
-
-        # Initialize APDS9960 gesture sensor
-        self.apds = APDS9960(self.i2c)
-        self.apds.enable_proximity = True
-        self.apds.enable_gesture = True
 
         # Load settings at startup
         self.load_settings()
@@ -260,6 +266,33 @@ class AlarmClock:
         elif now >= self.alarm_time and self.alarm_stat == "OFF":
             print("alarm mode off")
         return
+
+    def eds(self):
+        """
+        Measure distance using the EDS (ultrasonic sensor).
+
+        Returns:
+            float: The measured distance in centimeters, or -1 if timeout occurs.
+        """
+        self.trig.off()
+        time.sleep(0.000002)
+        self.trig.on()
+        time.sleep(0.000015)
+        self.trig.off()
+        timeout = time.time() + 0.05
+        while not self.echo.value:
+            if time.time() > timeout:
+                return -1
+        pulse_start = time.time()
+        timeout = time.time() + 0.05
+        while self.echo.value:
+            if time.time() > timeout:
+                return -1
+        pulse_end = time.time()
+        pulse_duration = pulse_end - pulse_start
+        distance = pulse_duration * 6752
+        distance = round(distance, 2)
+        return distance
 
     def clear_alpha_display(self):
         """
@@ -766,34 +799,129 @@ class AlarmClock:
         except Exception as e:
             self.logger.error("Failed to load settings: %s", str(e))
 
-    def poll_gesture_sensor(self):
+    def handle_eds_wake(self, now):
         """
-        Poll the APDS9960 gesture sensor and handle left/right gestures for snooze and display wake/off.
+        Wake the display if the EDS (ultrasonic sensor) detects a hand wave while display is off.
+
+        Args:
+            now (datetime): The current datetime.
         """
-        gesture = self.apds.gesture()
-        if gesture == 0x04:  # Right (left-to-right)
-            # Wake display if off, or snooze if alarm is ringing
-            if self.display_mode in ["MANUAL_OFF", "AUTO_OFF"] and self.display_override == "OFF":
+        # Wake the display on EDS
+        if self.display_override == "OFF":
+            if self.display_mode == "AUTO_OFF" and 0 < self.distance < 4:
+                self.loop_count = 0
                 self.display_mode = "AUTO_DIM"
                 self.display_override = "ON"
-                now = self.get_time()
-                for _ in range(100):
+                while self.loop_count <= 100:
+                    now = self.get_time()
                     num_message = int(now.strftime("%I"))*100+int(now.strftime("%M"))
                     self.display_num_message(num_message, self.display_mode, now)
                     time.sleep(.03)
-                    now = self.get_time()
+                    self.loop_count += 1
                 self.display_mode = "AUTO_OFF"
                 self.display_override = "OFF"
-            elif self.alarm_ringing == 1:
-                self.alarm_ringing = 0
-                self.alarm_time = self.alarm_time + datetime.timedelta(minutes=5)
-                self.sleep_state = "ON"
-        elif gesture == 0x03:  # Left (right-to-left)
-            # Turn off alarm if ringing
-            if self.alarm_ringing == 1:
-                self.alarm_ringing = 0
-                self.alarm_stat = "OFF"
-                self.sleep_state = "OFF"
+            elif self.display_mode == "MANUAL_OFF" and 0 < self.distance < 4:
+                self.loop_count = 0
+                self.display_mode = "AUTO_DIM"
+                self.display_override = "ON"
+                while self.loop_count <= 100:
+                    now = self.get_time()
+                    num_message = int(now.strftime("%I"))*100+int(now.strftime("%M"))
+                    self.display_num_message(num_message, self.display_mode, now)
+                    time.sleep(.03)
+                    self.loop_count += 1
+                self.display_mode = "MANUAL_OFF"
+                self.display_override = "OFF"
+
+    def update_main_display(self, now):
+        """
+        Update the main numeric display with the current time and brightness.
+
+        Args:
+            now (datetime): The current datetime.
+        """
+        num_message = int(now.strftime("%I"))*100+int(now.strftime("%M"))
+        # Determine current brightness
+        if self.display_mode == "AUTO_DIM":
+            current_brightness = self.auto_dim_level / 15.0
+        elif self.display_mode == "MANUAL_DIM":
+            current_brightness = self.manual_dim_level / 15.0
+        else:
+            current_brightness = self.num_display.brightness
+        # Only update if value or brightness changed
+        if (num_message != self.last_num_message) or (current_brightness != self.last_num_brightness):
+            self.num_display.fill(0)
+            self.num_display.print(str(num_message))
+            self.num_display.brightness = current_brightness
+            self.last_num_message = num_message
+            self.last_num_brightness = current_brightness
+        # Always update colon and show, for blink effect
+        self.num_display.colon = now.second % 2
+        try:
+            self.num_display.show()
+        except Exception as e:
+            self.logger.error("num_display.show() error: %s", str(e))
+        self.update_alpha_display(now)
+
+    def update_alpha_display(self, now):
+        """
+        Update the alphanumeric display based on the current settings and state.
+
+        Args:
+            now (datetime): The current datetime.
+        """
+        if self.alarm_settings_state == 2:
+            if self.alarm_set == 1:
+                alpha_message = self.alarm_hour*100 + self.alarm_minute
+                self.display_alpha_message("FLOAT", alpha_message, self.display_mode)
+            elif self.alarm_set == 2:
+                alpha_message = self.alarm_hour*100 + self.alarm_minute
+                self.display_alpha_message("FLOAT", alpha_message, self.display_mode)
+            elif self.alarm_set == 3:
+                alpha_message = self.period
+                self.display_alpha_message("STR", alpha_message, self.display_mode)
+            elif self.alarm_set == 4:
+                alpha_message = self.alarm_stat
+                self.display_alpha_message("STR", alpha_message, self.display_mode)
+            elif self.alarm_set == 5:
+                alpha_message = self.alarm_track
+                self.display_alpha_message("FLOAT", alpha_message, self.display_mode)
+                if self.use_audio:
+                    os.system(f"mpg123 -q {self.alarm_tracks[self.alarm_track]} &")
+            elif self.alarm_set == 6:
+                alpha_message = self.vol_level
+                self.display_alpha_message("FLOAT", alpha_message, self.display_mode)
+                if self.use_audio:
+                    self.mixer.setvolume(self.vol_level)
+                    os.system(f"mpg123 -q {self.alarm_tracks[self.alarm_track]} &")
+        elif self.display_settings_state == 2:
+            if self.display_set == 1:
+                alpha_message = self.manual_dim_level
+                self.display_alpha_message("FLOAT", alpha_message, self.display_mode)
+            elif self.display_set == 2:
+                alpha_message = self.display_override
+                self.display_alpha_message("STR", alpha_message, self.display_mode)
+        elif (self.alarm_settings_state == 1 and self.display_settings_state == 1):
+            self.alpha_display.fill(0)
+            try:
+                self.alpha_display.show()
+            except Exception as e:
+                self.logger.error("alpha_display.show() error: %s", str(e))
+
+    def handle_display_off(self):
+        """
+        Turn off both the alphanumeric and numeric displays.
+        """
+        self.alpha_display.fill(0)
+        try:
+            self.alpha_display.show()
+        except Exception as e:
+            self.logger.error("alpha_display.show() error: %s", str(e))
+        self.num_display.fill(0)
+        try:
+            self.num_display.show()
+        except Exception as e:
+            self.logger.error("num_display.show() error: %s", str(e))
 
     def main_loop_iteration(self):
         """
@@ -807,7 +935,7 @@ class AlarmClock:
         if (self.display_mode == "MANUAL_OFF" or self.display_mode == "AUTO_OFF") and self.display_override == "OFF":
             self.distance = self.eds()
             print(f"{self.distance} {self.display_mode}")
-        self.poll_gesture_sensor()
+        self.handle_eds_wake(now)
         if self.display_mode != "MANUAL_OFF":
             self.update_main_display(now)
         elif (self.display_mode == "MANUAL_OFF" or self.display_mode == "AUTO_OFF"):
