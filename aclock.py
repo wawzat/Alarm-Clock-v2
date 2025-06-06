@@ -579,6 +579,18 @@ class AlarmClock:
                         self.alarm_ringing = 0
                         self.alarm_stat = "OFF"
                         self.sleep_state = "OFF"
+                        # Immediately clear displays to stop RING
+                        self.alpha_display.fill(0)
+                        try:
+                            self.alpha_display.show()
+                        except Exception as e:
+                            self.logger.error("alpha_display.show() error: %s", str(e))
+                        self.num_display.fill(0)
+                        try:
+                            self.num_display.show()
+                        except Exception as e:
+                            self.logger.error("num_display.show() error: %s", str(e))
+                        # Break out of alarm check loop if running
                     if idx == 0:
                         # Switch 1 (yellow): Display settings
                         self.display_settings_callback(1)
@@ -592,10 +604,11 @@ class AlarmClock:
                         time.sleep(0.003)
                     for cycle in range(65534, 0, -8000):
                         self.arcade_leds[idx].duty_cycle = cycle
-                        time.sleep(0.003)               
-            elif not pressed:  # Button up event
-                self.arcade_leds[idx].duty_cycle =0  # Turn off LED
-            self.last_arcade_button_states[idx] = pressed
+                        time.sleep(0.003)
+                self.last_press[idx] = now
+            elif not pressed:
+                self.arcade_leds[idx].duty_cycle = 0  # Turn off LED
+            self.last_state[idx] = pressed
 
     def brightness(self, auto_dim, alarm_stat, display_mode, now):
         """
