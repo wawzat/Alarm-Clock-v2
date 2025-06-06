@@ -134,6 +134,7 @@ class AlarmClock:
         self.alarm_track = 1
         self.vol_level = 65
         self.alarm_tracks = {1: '01.mp3', 2: '02.mp3', 3: '03.mp3', 4: '04.mp3', 5: '05.mp3', 6: '06.mp3'}
+        self.auto_dim = "ON"  # Auto dim feature flag
         self.loop_count = 0
         self.debug = "NO"
 
