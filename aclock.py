@@ -28,6 +28,7 @@ import logging
 import board
 import busio
 import json
+from adafruit_apds9960.apds9960 import APDS9960  # Add APDS9960 import
 
 class AlarmClock:
     """
@@ -63,16 +64,26 @@ class AlarmClock:
         # Remove rotary encoder GPIO and rotary_class_jsl
         # Remove all references to DigitalInputDevice, DigitalOutputDevice, Button for alarm/display settings
 
-        # Define EDS GPIO input and output pins and setup gpiozero devices
-        self.trig_pin = 5
-        self.echo_pin = 22
-        self.trig = DigitalOutputDevice(self.trig_pin)
-        self.echo = DigitalInputDevice(self.echo_pin)
+        # Initialize I2C for Arcade Button 1x4 (address 0x3A)
+        # I2C address for Adafruit LED Arcade Button 1x4
+        self.last_state = [True, True]  # True means not pressed (pull-up)
+        self.last_press = [0, 0]
+        self.debounce_time = 0.25  # 250 ms debounce
+        self.ARCADE_BUTTON_ADDR = 0x3A
+        # Button pins: 18 (yellow), 19 (white)
+        self.BUTTON_PINS = (18, 19)
+        self.LED_PINS = (12, 13)  # Per Adafruit example: 12 (yellow), 13 (white)
 
-        # Pulse EDS and wait for sensor to settle
-        self.trig.off()
-        print("Waiting For Sensor To Settle")
-        time.sleep(2)
+        # Set up I2C and Seesaw device
+        self.arcade = Seesaw(self.i2c, addr=self.ARCADE_BUTTON_ADDR)
+
+        # Set up digitalio for buttons
+        self.arcade_buttons = []
+        for pin in self.BUTTON_PINS:
+            self.button = DigitalIO(self.arcade, pin)
+            self.button.direction = digitalio.Direction.INPUT
+            self.button.pull = digitalio.Pull.UP
+            self.arcade_buttons.append(self.button)
 
         # Define increment for alarm minute adjustment
         self.minute_incr = 1
@@ -91,15 +102,10 @@ class AlarmClock:
         self.encoder_button_down = False
         self.encoder_button_up = False
 
-        # Initialize I2C for Arcade Button 1x4 (address 0x3A)
-        # I2C address for Adafruit LED Arcade Button 1x4
-        self.last_state = [True, True]  # True means not pressed (pull-up)
-        self.last_press = [0, 0]
-        self.debounce_time = 0.25  # 250 ms debounce
-        self.ARCADE_BUTTON_ADDR = 0x3A
-        # Button pins: 18 (yellow), 19 (white)
-        self.BUTTON_PINS = (18, 19)
-        self.LED_PINS = (12, 13)  # Per Adafruit example: 12 (yellow), 13 (white)
+        # Initialize APDS9960 gesture sensor
+        self.apds = APDS9960(self.i2c)
+        self.apds.enable_proximity = True
+        self.apds.enable_gesture = True
 
         # Set up I2C and Seesaw device
         self.arcade = Seesaw(self.i2c, addr=self.ARCADE_BUTTON_ADDR)
@@ -144,7 +150,7 @@ class AlarmClock:
         self.alarm_track = 1
         self.vol_level = 65
         self.alarm_tracks = {1: '01.mp3', 2: '02.mp3', 3: '03.mp3', 4: '04.mp3', 5: '05.mp3', 6: '06.mp3'}
-        self.distance = 0
+        # self.distance = 0
         self.auto_dim = "ON"
         self.loop_count = 0
         self.debug = "NO"
@@ -266,33 +272,6 @@ class AlarmClock:
         elif now >= self.alarm_time and self.alarm_stat == "OFF":
             print("alarm mode off")
         return
-
-    def eds(self):
-        """
-        Measure distance using the EDS (ultrasonic sensor).
-
-        Returns:
-            float: The measured distance in centimeters, or -1 if timeout occurs.
-        """
-        self.trig.off()
-        time.sleep(0.000002)
-        self.trig.on()
-        time.sleep(0.000015)
-        self.trig.off()
-        timeout = time.time() + 0.05
-        while not self.echo.value:
-            if time.time() > timeout:
-                return -1
-        pulse_start = time.time()
-        timeout = time.time() + 0.05
-        while self.echo.value:
-            if time.time() > timeout:
-                return -1
-        pulse_end = time.time()
-        pulse_duration = pulse_end - pulse_start
-        distance = pulse_duration * 6752
-        distance = round(distance, 2)
-        return distance
 
     def clear_alpha_display(self):
         """
@@ -799,16 +778,17 @@ class AlarmClock:
         except Exception as e:
             self.logger.error("Failed to load settings: %s", str(e))
 
-    def handle_eds_wake(self, now):
+    def handle_gesture(self, now):
         """
-        Wake the display if the EDS (ultrasonic sensor) detects a hand wave while display is off.
-
-        Args:
-            now (datetime): The current datetime.
+        Handle gestures from the APDS9960 sensor for display wake and alarm snooze.
+        Left-to-right or right-to-left gesture wakes display if off.
+        Left-to-right gesture snoozes alarm if ringing.
         """
-        # Wake the display on EDS
-        if self.display_override == "OFF":
-            if self.display_mode == "AUTO_OFF" and 0 < self.distance < 4:
+        gesture = self.apds.gesture()
+        # 0x03 = left (right-to-left), 0x04 = right (left-to-right)
+        if gesture in (0x03, 0x04):
+            # Wake display if off
+            if self.display_override == "OFF" and (self.display_mode == "AUTO_OFF" or self.display_mode == "MANUAL_OFF"):
                 self.loop_count = 0
                 self.display_mode = "AUTO_DIM"
                 self.display_override = "ON"
@@ -818,19 +798,11 @@ class AlarmClock:
                     self.display_num_message(num_message, self.display_mode, now)
                     time.sleep(.03)
                     self.loop_count += 1
-                self.display_mode = "AUTO_OFF"
-                self.display_override = "OFF"
-            elif self.display_mode == "MANUAL_OFF" and 0 < self.distance < 4:
-                self.loop_count = 0
-                self.display_mode = "AUTO_DIM"
-                self.display_override = "ON"
-                while self.loop_count <= 100:
-                    now = self.get_time()
-                    num_message = int(now.strftime("%I"))*100+int(now.strftime("%M"))
-                    self.display_num_message(num_message, self.display_mode, now)
-                    time.sleep(.03)
-                    self.loop_count += 1
-                self.display_mode = "MANUAL_OFF"
+                # Restore previous off mode
+                if self.display_mode == "AUTO_DIM":
+                    self.display_mode = "AUTO_OFF"
+                else:
+                    self.display_mode = "MANUAL_OFF"
                 self.display_override = "OFF"
 
     def update_main_display(self, now):
@@ -932,19 +904,18 @@ class AlarmClock:
             self.display_mode = self.debug_brightness(self.auto_dim, self.alarm_stat, self.display_mode, now)
         else:
             self.display_mode = self.brightness(self.auto_dim, self.alarm_stat, self.display_mode, now)
-        if (self.display_mode == "MANUAL_OFF" or self.display_mode == "AUTO_OFF") and self.display_override == "OFF":
-            self.distance = self.eds()
-            print(f"{self.distance} {self.display_mode}")
-        self.handle_eds_wake(now)
+        # Remove EDS distance check
+        # self.distance = self.eds()
+        # print(f"{self.distance} {self.display_mode}")
+        # Remove handle_eds_wake, replace with gesture handler
+        self.handle_gesture(now)
         if self.display_mode != "MANUAL_OFF":
             self.update_main_display(now)
         elif (self.display_mode == "MANUAL_OFF" or self.display_mode == "AUTO_OFF"):
             self.handle_display_off()
         if self.alarm_stat == "ON":
             self.check_alarm(now)
-        # Poll the rotary encoder each loop
         self.poll_rotary_encoder()
-        # Poll arcade buttons each loop
         self.poll_arcade_buttons()
 
     def run(self):
