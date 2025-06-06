@@ -336,7 +336,7 @@ class AlarmClock:
                 self.alpha_display.show()
             except Exception as e:
                 self.logger.error("alpha_display.show() error: %s", str(e))
-            time.sleep(.5)
+            #time.sleep(.5)
         # Reset display cache to force refresh
         self.last_num_message = None
         self.last_num_brightness = None
