@@ -820,6 +820,38 @@ class AlarmClock:
         except Exception as e:
             self.logger.error("Failed to load settings: %s", str(e))
 
+    def update_main_display(self, now):
+        """
+        Update the main numeric display with the current time and brightness.
+
+        Args:
+            now (datetime): The current datetime.
+        """
+        num_message = int(now.strftime("%I"))*100+int(now.strftime("%M"))
+        # Determine current brightness
+        if self.display_mode == "AUTO_DIM":
+            current_brightness = self.auto_dim_level / 15.0
+        elif self.display_mode == "MANUAL_DIM":
+            current_brightness = self.manual_dim_level / 15.0
+        else:
+            current_brightness = self.num_display.brightness
+        # Only update if value or brightness changed
+        if (num_message != getattr(self, 'last_num_message', None)) or (current_brightness != getattr(self, 'last_num_brightness', None)):
+            self.num_display.fill(0)
+            self.num_display.print(str(num_message))
+            self.num_display.brightness = current_brightness
+            self.last_num_message = num_message
+            self.last_num_brightness = current_brightness
+        # Always update colon and show, for blink effect
+        self.num_display.colon = now.second % 2
+        try:
+            self.num_display.show()
+        except Exception as e:
+            self.logger.error("num_display.show() error: %s", str(e))
+        # Optionally update alpha display as well
+        if hasattr(self, 'update_alpha_display'):
+            self.update_alpha_display(now)
+
     def main_loop_iteration(self):
         """
         Perform a single iteration of the main loop: update display, check alarm, and handle EDS wake.
