@@ -223,6 +223,8 @@ class AlarmClock:
             last_num_message = None
             last_colon = None
             while self.alarm_ringing == 1 and self.alarm_stat == "ON":
+                # --- POLL ARCADE BUTTONS DURING ALARM RING ---
+                self.poll_arcade_buttons()
                 loop_count += 1
                 self.alpha_display.fill(0)
                 self.alpha_display.print("RING")
@@ -253,6 +255,8 @@ class AlarmClock:
                 snooze_window = max(0.5, 2-time_decrease)  # never less than 0.5s
                 start_time = time.time()
                 while time.time() - start_time < snooze_window:
+                    # --- POLL ARCADE BUTTONS DURING SNOOZE WINDOW ---
+                    self.poll_arcade_buttons()
                     gesture = self.apds.gesture()
                     print(f"APDS9960 gesture: {gesture}")
                     # 0x03 = left (right-to-left), 0x04 = right (left-to-right)
@@ -269,6 +273,8 @@ class AlarmClock:
                     # Wait for cooldown before allowing alarm to re-trigger
                     print(f"Snooze cooldown for {snooze_cooldown} seconds.")
                     while time.time() - snooze_time < snooze_cooldown:
+                        # --- POLL ARCADE BUTTONS DURING SNOOZE COOLDOWN ---
+                        self.poll_arcade_buttons()
                         time.sleep(0.2)
                     break
         elif now >= self.alarm_time and self.alarm_stat == "OFF":
