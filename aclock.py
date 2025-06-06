@@ -64,6 +64,8 @@ class AlarmClock:
         # Remove rotary encoder GPIO and rotary_class_jsl
         # Remove all references to DigitalInputDevice, DigitalOutputDevice, Button for alarm/display settings
 
+        self.i2c = busio.I2C(board.SCL, board.SDA)
+
         # Initialize I2C for Arcade Button 1x4 (address 0x3A)
         # I2C address for Adafruit LED Arcade Button 1x4
         self.last_state = [True, True]  # True means not pressed (pull-up)
@@ -89,7 +91,6 @@ class AlarmClock:
         self.minute_incr = 1
 
         # Create display instances (default I2C address (0x70))
-        self.i2c = busio.I2C(board.SCL, board.SDA)
         self.alpha_display = Seg14x4(self.i2c)
         self.num_display = Seg7x4(self.i2c, address=0x72)
 
