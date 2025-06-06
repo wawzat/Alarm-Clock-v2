@@ -40,7 +40,7 @@ class AlarmClock:
         - Rotary encoder and button input handling
         - Persistent settings storage and loading
         - Optional audio playback for alarm
-        - EDS (ultrasonic sensor) for snooze and display wake
+        - Proximity and Gesture sensor for snooze and display wake
     """
     SETTINGS_FILE = "settings.json"
     PERSISTED_SETTINGS = [
@@ -249,14 +249,15 @@ class AlarmClock:
                     self.mixer.setvolume(self.vol_level+vol_increase)
                     os.system(f"mpg123 -q {self.alarm_tracks[self.alarm_track]} &")
                 print(f"alarm ring, now: {now.time()} alarm: {self.alarm_time.time()} Count: {loop_count} Vol: {self.vol_level+vol_increase} Ring Time: {3-time_decrease} alarm_ringing: {self.alarm_ringing} sleep_state: {self.sleep_state}")
-                # Check EDS for snooze every 0.1s for up to 2 seconds (or less as time_decrease increases)
+                # Check gesture sensor for snooze every 0.1s for up to 2 seconds (or less as time_decrease increases)
                 snooze_window = max(0.5, 2-time_decrease)  # never less than 0.5s
                 start_time = time.time()
                 while time.time() - start_time < snooze_window:
-                    self.distance = self.eds()
-                    print(f"EDS distance: {self.distance}")
-                    if 0 < self.distance < 4:
-                        print("Snooze triggered by hand wave!")
+                    gesture = self.apds.gesture()
+                    print(f"APDS9960 gesture: {gesture}")
+                    # 0x03 = left (right-to-left), 0x04 = right (left-to-right)
+                    if gesture in (0x03, 0x04):
+                        print("Snooze triggered by hand wave (gesture)!")
                         self.alarm_ringing = 0
                         self.alarm_time = self.alarm_time + datetime.timedelta(minutes=5)  # 5 min snooze
                         self.sleep_state = "ON"
