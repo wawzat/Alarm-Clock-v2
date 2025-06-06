@@ -574,6 +574,7 @@ class AlarmClock:
         Poll the Adafruit LED Arcade Button 1x4 for button presses and handle display/alarm settings.
         Switch 1 (yellow): Display settings, Switch 2 (white): Alarm settings.
         Also turns off a ringing or snoozed alarm when either button is pressed.
+        If used to turn off a ringing/snoozed alarm, do NOT show the alphanumeric display.
         """
         now = time.monotonic()
         for idx, btn in enumerate(self.arcade_buttons):
@@ -585,7 +586,7 @@ class AlarmClock:
                         self.alarm_ringing = 0
                         self.alarm_stat = "OFF"
                         self.sleep_state = "OFF"
-                        # Immediately clear displays to stop RING
+                        # Immediately clear displays to stop RING, but do NOT show alphanumeric display
                         self.alpha_display.fill(0)
                         try:
                             self.alpha_display.show()
@@ -596,15 +597,16 @@ class AlarmClock:
                             self.num_display.show()
                         except Exception as e:
                             self.logger.error("num_display.show() error: %s", str(e))
-                        # Break out of alarm check loop if running
-                    if idx == 0:
-                        # Switch 1 (yellow): Display settings
-                        self.display_settings_callback(1)
-                        self.arcade_leds[0].value = True  # Turn on yellow LED
-                    elif idx == 1:
-                        # Switch 2 (white): Alarm settings
-                        self.alarm_settings_callback(1)
-                        self.arcade_leds[1].value = True  # Turn on white LED
+                        # Do NOT call display_settings_callback or alarm_settings_callback in this case
+                    else:
+                        if idx == 0:
+                            # Switch 1 (yellow): Display settings
+                            self.display_settings_callback(1)
+                            self.arcade_leds[0].value = True  # Turn on yellow LED
+                        elif idx == 1:
+                            # Switch 2 (white): Alarm settings
+                            self.alarm_settings_callback(1)
+                            self.arcade_leds[1].value = True  # Turn on white LED
                     for cycle in range(0, 65535, 8000):
                         self.arcade_leds[idx].duty_cycle = cycle
                         time.sleep(0.003)
