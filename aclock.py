@@ -589,10 +589,12 @@ class AlarmClock:
                             # Switch 2 (white): Alarm settings
                             self.alarm_settings_callback(1)
                             self.arcade_leds[1].value = True  # Turn on white LED
-                    for cycle in range(0, 65535, 8000):
+                    # Set max brightness for each button LED
+                    max_brightness = 65535 if idx == 0 else 20000  # Lower for alarm settings button
+                    for cycle in range(0, max_brightness, 8000):
                         self.arcade_leds[idx].duty_cycle = cycle
                         time.sleep(0.002)
-                    for cycle in range(65534, 0, -8000):
+                    for cycle in range(max_brightness - 1, 0, -8000):
                         self.arcade_leds[idx].duty_cycle = cycle
                         time.sleep(0.002)
                 self.last_press[idx] = now
