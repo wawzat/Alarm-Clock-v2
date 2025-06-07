@@ -136,10 +136,17 @@ class AlarmClock:
         self.alarm_track = 1
         self.vol_level = 65
         self.alarm_tracks = {1: '01.mp3', 2: '02.mp3', 3: '03.mp3', 4: '04.mp3', 5: '05.mp3', 6: '06.mp3'}
-        # self.distance = 0
         self.auto_dim = "ON"
         self.loop_count = 0
         self.debug = "NO"
+
+        # Time range configuration for brightness modes
+        self.manual_dim_start = "07:30"
+        self.manual_dim_end = "22:00"
+        self.auto_dim_start = "22:00"
+        self.auto_dim_end = "23:59"
+        self.auto_off_start = "00:00"
+        self.auto_off_end = "07:00"
 
         # Rotary encoder action dictionaries
         self.clockwise_alarm_actions = {
@@ -197,7 +204,7 @@ class AlarmClock:
         loop_count = 0
         vol_increase = 0
         time_decrease = 0
-        print(f"time: {now.time()} {self.period}  alarm time: {self.alarm_time.time()}")
+        print(f"time: {now.time()} {self.period} alarm time: {self.alarm_time.time()}")
         if now.strftime("%p") == self.period and now.time() >= self.alarm_time.time() and self.alarm_stat == "ON":
             self.alarm_ringing = 1
             self.sleep_state = "OFF"
@@ -607,19 +614,19 @@ class AlarmClock:
             str: The updated display mode.
         """
         if auto_dim == "ON":
-            if dt.strptime("07:30", "%H:%M").time() <= now.time() <= dt.strptime("22:00", "%H:%M").time():
+            if dt.strptime(self.manual_dim_start, "%H:%M").time() <= now.time() <= dt.strptime(self.manual_dim_end, "%H:%M").time():
                 display_mode = "MANUAL_DIM"
-            elif dt.strptime("22:00", "%H:%M").time() < now.time() <= dt.strptime("23:59", "%H:%M").time():
+            elif dt.strptime(self.auto_dim_start, "%H:%M").time() < now.time() <= dt.strptime(self.auto_dim_end, "%H:%M").time():
                 display_mode = "AUTO_DIM"
             if alarm_stat == "OFF":
-                if dt.strptime("00:00", "%H:%M").time() < now.time() <= dt.strptime("07:00", "%H:%M").time():
+                if dt.strptime(self.auto_off_start, "%H:%M").time() < now.time() <= dt.strptime(self.auto_off_end, "%H:%M").time():
                     if self.display_override == "OFF":
                         display_mode = "AUTO_OFF"
             elif alarm_stat == "ON":
                 if dt.strptime("00:01", "%H:%M").time() <= now.time() < dt.strptime(self.alarm_time.time().strftime("%H:%M"), "%H:%M").time():
                     if self.display_override == "OFF":
                         display_mode = "AUTO_OFF"
-                if dt.strptime(self.alarm_time.time().strftime("%H:%M"), "%H:%M").time() <= now.time() < dt.strptime("07:30", "%H:%M").time():
+                if dt.strptime(self.alarm_time.time().strftime("%H:%M"), "%H:%M").time() <= now.time() < dt.strptime(self.manual_dim_start, "%H:%M").time():
                     display_mode = "MANUAL_DIM"
         return display_mode
 
