@@ -820,6 +820,11 @@ class AlarmClock:
                 while self.loop_count <= 100:
                     now = self.get_time()
                     num_message = int(now.strftime("%I"))*100+int(now.strftime("%M"))
+                    # Set brightness for num_display during gesture wake
+                    if self.display_mode == "AUTO_DIM":
+                        self.num_display.brightness = self.auto_dim_level / 15.0
+                    elif self.display_mode == "MANUAL_DIM":
+                        self.num_display.brightness = self.manual_dim_level / 15.0
                     self.display_num_message(num_message, self.display_mode, now)
                     self.poll_arcade_buttons()  # Poll buttons during gesture wake
                     self.poll_rotary_encoder()
