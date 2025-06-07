@@ -816,30 +816,12 @@ class AlarmClock:
                 self.loop_count = 0
                 self.display_mode = "AUTO_DIM"
                 self.display_override = "ON"
-                start_time = time.time()
                 while self.loop_count <= 100:
                     now = self.get_time()
                     num_message = int(now.strftime("%I"))*100+int(now.strftime("%M"))
-                    # Set brightness for num_display during gesture wake
-                    if self.display_mode == "AUTO_DIM":
-                        self.num_display.brightness = self.auto_dim_level / 15.0
-                    elif self.display_mode == "MANUAL_DIM":
-                        self.num_display.brightness = self.manual_dim_level / 15.0
                     self.display_num_message(num_message, self.display_mode, now)
-                    self.poll_arcade_buttons()  # Poll buttons during gesture wake
-                    self.poll_rotary_encoder()
-                    # Reduce sleep to improve responsiveness
-                    time.sleep(0.005)
+                    time.sleep(.03)
                     self.loop_count += 1
-                    # Break out if any button is pressed
-                    if any(not btn.value for btn in self.arcade_buttons):
-                        break
-                    # Also break if rotary encoder button is pressed
-                    if not self.encoder_button.value:
-                        break
-                    # Timeout after 3 seconds for safety
-                    if time.time() - start_time > 3:
-                        break
                 # Restore previous off mode
                 if self.display_mode == "AUTO_DIM":
                     self.display_mode = "AUTO_OFF"
