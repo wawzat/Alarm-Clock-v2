@@ -821,6 +821,8 @@ class AlarmClock:
                     num_message = int(now.strftime("%I"))*100+int(now.strftime("%M"))
                     self.display_num_message(num_message, self.display_mode, now)
                     self.poll_arcade_buttons()  # Poll buttons during gesture wake
+                    # Also poll rotary encoder during gesture wake
+                    self.poll_rotary_encoder()
                     time.sleep(.03)
                     self.loop_count += 1
                 # Restore previous off mode
