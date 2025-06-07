@@ -60,40 +60,36 @@ class AlarmClock:
             handler.setFormatter(formatter)
             self.logger.addHandler(handler)
 
-        # Remove rotary encoder GPIO and rotary_class_jsl
-        # Remove all references to DigitalInputDevice, DigitalOutputDevice, Button for alarm/display settings
-
         self.i2c = busio.I2C(board.SCL, board.SDA)
 
         # Initialize I2C for Arcade Button 1x4 (address 0x3A)
-        # I2C address for Adafruit LED Arcade Button 1x4
         self.last_state = [True, True]  # True means not pressed (pull-up)
         self.last_press = [0, 0]
-        self.debounce_time = 0.25  # 250 ms debounce
+        self.debounce_time = 0.21  # 210 ms debounce
         self.ARCADE_BUTTON_ADDR = 0x3A
         # Button pins: 18 (yellow), 19 (white)
-        self.BUTTON_PINS = (18, 19)
-        self.LED_PINS = (12, 13)  # Per Adafruit example: 12 (yellow), 13 (white)
+        BUTTON_PINS = (18, 19)
+        LED_PINS = (12, 13)  # 12 (yellow, display settings), 13 (white, alarm settings)
 
         # Set up I2C and Seesaw device
         self.arcade = Seesaw(self.i2c, addr=self.ARCADE_BUTTON_ADDR)
 
         # Set up digitalio for buttons
         self.arcade_buttons = []
-        for pin in self.BUTTON_PINS:
-            self.button = DigitalIO(self.arcade, pin)
-            self.button.direction = digitalio.Direction.INPUT
-            self.button.pull = digitalio.Pull.UP
-            self.arcade_buttons.append(self.button)
+        for pin in BUTTON_PINS:
+            button = DigitalIO(self.arcade, pin)
+            button.direction = digitalio.Direction.INPUT
+            button.pull = digitalio.Pull.UP
+            self.arcade_buttons.append(button)
 
         # Define increment for alarm minute adjustment
         self.minute_incr = 1
 
-        # Create display instances (default I2C address (0x70))
+        # Create display instances
         self.alpha_display = Seg14x4(self.i2c)
         self.num_display = Seg7x4(self.i2c, address=0x72)
 
-        # Initialize Stemma QT rotary encoder (default I2C address 0x36)
+        # Initialize Stemma QT rotary encoder
         self.encoder_seesaw = Seesaw(self.i2c, addr=0x36)
         self.encoder = rotaryio.IncrementalEncoder(self.encoder_seesaw)
         self.encoder_button = DigitalIO(self.encoder_seesaw, 24)
@@ -110,16 +106,8 @@ class AlarmClock:
         # Set up I2C and Seesaw device
         self.arcade = Seesaw(self.i2c, addr=self.ARCADE_BUTTON_ADDR)
 
-        # Set up digitalio for buttons
-        self.arcade_buttons = []
-        for pin in self.BUTTON_PINS:
-            self.button = DigitalIO(self.arcade, pin)
-            self.button.direction = digitalio.Direction.INPUT
-            self.button.pull = digitalio.Pull.UP
-            self.arcade_buttons.append(self.button)
-
         # Set up PWMOut for LEDs
-        self.arcade_leds = [PWMOut(self.arcade, pin) for pin in self.LED_PINS]
+        self.arcade_leds = [PWMOut(self.arcade, pin) for pin in LED_PINS]
 
         # Track last button state for edge detection
         self.last_arcade_button_states = [btn.value for btn in self.arcade_buttons]
@@ -300,7 +288,6 @@ class AlarmClock:
         debug_lines = []
         debug_lines.append(f"alarm_settings_callback called with channel={channel} alarm_state={self.alarm_settings_state}, display_state={self.display_settings_state}, alarm_set={self.alarm_set}")
         # Only act on BUTTONUP (button release)
-        # Remove RotaryEncoder.BUTTONUP reference, use 1 for BUTTONUP
         if channel != 1:
             debug_lines.append("alarm_settings_callback: Ignored, not BUTTONUP")
             print("\n".join(debug_lines), end="\n")
@@ -343,7 +330,6 @@ class AlarmClock:
         debug_lines = []
         debug_lines.append(f"display_settings_callback called with channel={channel} display_state={self.display_settings_state}, alarm_set={self.alarm_set}, aux_set={self.display_set}")
         # Only act on BUTTONUP (button release)
-        # Remove RotaryEncoder.BUTTONUP reference, use 1 for BUTTONUP
         if channel != 1:
             return
         if self.display_settings_state == 1:
@@ -507,8 +493,6 @@ class AlarmClock:
         self.display_override = "OFF" if self.display_override == "ON" else "ON"
         return False
 
-    # Remove rotary_encoder_event and RotaryEncoder references
-    # Add new method to handle rotary encoder polling
     def poll_rotary_encoder(self):
         """
         Poll the I2C rotary encoder for position and button events, and handle alarm/display settings accordingly.
@@ -573,7 +557,6 @@ class AlarmClock:
         Poll the Adafruit LED Arcade Button 1x4 for button presses and handle display/alarm settings.
         Switch 1 (yellow): Display settings, Switch 2 (white): Alarm settings.
         Also turns off a ringing or snoozed alarm when either button is pressed.
-        If used to turn off a ringing/snoozed alarm, do NOT show the alphanumeric display or clear the numeric display.
         """
         now = time.monotonic()
         for idx, btn in enumerate(self.arcade_buttons):
@@ -927,10 +910,6 @@ class AlarmClock:
             self.display_mode = self.debug_brightness(self.auto_dim, self.alarm_stat, self.display_mode, now)
         else:
             self.display_mode = self.brightness(self.auto_dim, self.alarm_stat, self.display_mode, now)
-        # Remove EDS distance check
-        # self.distance = self.eds()
-        # print(f"{self.distance} {self.display_mode}")
-        # Remove handle_eds_wake, replace with gesture handler
         self.handle_gesture(now)
         if self.display_mode != "MANUAL_OFF":
             self.update_main_display(now)
