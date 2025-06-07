@@ -67,14 +67,14 @@ class AlarmClock:
             self.mixer = alsaaudio.Mixer('PCM')
 
         # Time range configuration for brightness modes
-        self.manual_dim_start = "07:30"
-        self.manual_dim_end = "22:00"
-        self.auto_dim_start = "22:00"
-        self.auto_dim_end = "23:59"
-        #self.auto_off_start = "00:00"
-        #self.auto_off_end = "07:00"
-        self.auto_off_start = "14:40"
-        self.auto_off_end = "17:00"
+        self.auto_off_start = "00:00"  # Default, can be set by user
+        # Calculate other times relative to auto_off_start
+        base_time = dt.strptime(self.auto_off_start, "%H:%M")
+        self.auto_off_end = (base_time + datetime.timedelta(hours=7)).strftime("%H:%M")  # +7 hours
+        self.manual_dim_start = (base_time + datetime.timedelta(hours=7, minutes=30)).strftime("%H:%M")  # +7.5 hours
+        self.manual_dim_end = (base_time + datetime.timedelta(hours=22)).strftime("%H:%M")  # +22 hours
+        self.auto_dim_start = (base_time + datetime.timedelta(hours=22)).strftime("%H:%M")  # +22 hours
+        self.auto_dim_end = (base_time + datetime.timedelta(hours=23, minutes=59)).strftime("%H:%M")  # +23:59 hours
 
         self.i2c = busio.I2C(board.SCL, board.SDA)
 
