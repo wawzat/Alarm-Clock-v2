@@ -67,7 +67,7 @@ class AlarmClock:
             self.mixer = alsaaudio.Mixer('PCM')
 
         # Time range configuration for brightness modes
-        self.auto_off_start = "14:48"  # Default, can be set by user
+        self.auto_off_start = "00:00"  # Default, can be set by user
         # Calculate other times relative to auto_off_start
         base_time = dt.strptime(self.auto_off_start, "%H:%M")
         self.auto_off_end = (base_time + datetime.timedelta(hours=7)).strftime("%H:%M")  # +7 hours
