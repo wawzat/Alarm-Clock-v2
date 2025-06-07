@@ -66,13 +66,14 @@ class AlarmClock:
         self.last_state = [True, True]  # True means not pressed (pull-up)
         self.last_press = [0, 0]
         self.debounce_time = 0.21  # 210 ms debounce
-        self.ARCADE_BUTTON_ADDR = 0x3A
-        # Button pins: 18 (yellow), 19 (white)
+        ARCADE_BUTTON_ADDR = 0x3A
+        # Button pins: 18 (yellow, display settings), 19 (white, alarm settings)
+        # LED Pins: 12 (yellow), 13 (white)
         BUTTON_PINS = (18, 19)
-        LED_PINS = (12, 13)  # 12 (yellow, display settings), 13 (white, alarm settings)
+        LED_PINS = (12, 13)  
 
         # Set up I2C and Seesaw device
-        self.arcade = Seesaw(self.i2c, addr=self.ARCADE_BUTTON_ADDR)
+        self.arcade = Seesaw(self.i2c, addr=ARCADE_BUTTON_ADDR)
 
         # Set up digitalio for buttons
         self.arcade_buttons = []
@@ -81,6 +82,12 @@ class AlarmClock:
             button.direction = digitalio.Direction.INPUT
             button.pull = digitalio.Pull.UP
             self.arcade_buttons.append(button)
+
+        # Set up PWMOut for LEDs
+        self.arcade_leds = [PWMOut(self.arcade, pin) for pin in LED_PINS]
+
+        # Track last button state for edge detection
+        self.last_arcade_button_states = [btn.value for btn in self.arcade_buttons]
 
         # Define increment for alarm minute adjustment
         self.minute_incr = 1
@@ -102,15 +109,6 @@ class AlarmClock:
         self.apds = APDS9960(self.i2c)
         self.apds.enable_proximity = True
         self.apds.enable_gesture = True
-
-        # Set up I2C and Seesaw device
-        self.arcade = Seesaw(self.i2c, addr=self.ARCADE_BUTTON_ADDR)
-
-        # Set up PWMOut for LEDs
-        self.arcade_leds = [PWMOut(self.arcade, pin) for pin in LED_PINS]
-
-        # Track last button state for edge detection
-        self.last_arcade_button_states = [btn.value for btn in self.arcade_buttons]
 
         # Audio feature flag
         self.use_audio = False  # Set to True to enable audio features
