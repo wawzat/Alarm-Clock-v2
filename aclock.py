@@ -3,7 +3,7 @@
 # Issues and todo: alarm pre-selects, auto alarm repeat, issues with dimLevel 0 line 402 auto time setting conflict with manual off
 #   , display override move to display functions? LED blinking when after 8PM
 # 20171118
-# 20250605
+# 20250607
 
 # I2C addresses:
 #   0x70 - 14x4 alphanumeric display
@@ -18,17 +18,16 @@ import datetime
 from datetime import datetime as dt
 from adafruit_ht16k33.segments import Seg7x4
 from adafruit_ht16k33.segments import Seg14x4
-from gpiozero import DigitalInputDevice, DigitalOutputDevice
 from adafruit_seesaw.seesaw import Seesaw
 from adafruit_seesaw import rotaryio, digitalio
 from adafruit_seesaw.digitalio import DigitalIO
 from adafruit_seesaw.pwmout import PWMOut
+from adafruit_apds9960.apds9960 import APDS9960
 import digitalio
 import logging
 import board
 import busio
 import json
-from adafruit_apds9960.apds9960 import APDS9960  # Add APDS9960 import
 
 class AlarmClock:
     """
