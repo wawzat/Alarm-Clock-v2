@@ -602,6 +602,16 @@ class AlarmClock:
                 self.arcade_leds[idx].duty_cycle = 0  # Turn off LED
             self.last_state[idx] = pressed
 
+    def time_in_range(self, start_str, end_str, now_time):
+        """Return True if now_time is in the range [start, end], handling midnight wrap."""
+        start = dt.strptime(start_str, "%H:%M").time()
+        end = dt.strptime(end_str, "%H:%M").time()
+        if start <= end:
+            return start < now_time <= end
+        else:
+            # crosses midnight
+            return now_time > start or now_time <= end
+
     def brightness(self, auto_dim, alarm_stat, display_mode, now):
         """
         Determine the display mode based on auto dim, alarm status, and current time.
@@ -614,20 +624,22 @@ class AlarmClock:
         Returns:
             str: The updated display mode.
         """
+        now_time = now.time()
         if auto_dim == "ON":
-            if dt.strptime(self.manual_dim_start, "%H:%M").time() <= now.time() <= dt.strptime(self.manual_dim_end, "%H:%M").time():
+            if self.time_in_range(self.manual_dim_start, self.manual_dim_end, now_time):
                 display_mode = "MANUAL_DIM"
-            elif dt.strptime(self.auto_dim_start, "%H:%M").time() < now.time() <= dt.strptime(self.auto_dim_end, "%H:%M").time():
+            elif self.time_in_range(self.auto_dim_start, self.auto_dim_end, now_time):
                 display_mode = "AUTO_DIM"
             if alarm_stat == "OFF":
-                if dt.strptime(self.auto_off_start, "%H:%M").time() < now.time() <= dt.strptime(self.auto_off_end, "%H:%M").time():
+                if self.time_in_range(self.auto_off_start, self.auto_off_end, now_time):
                     if self.display_override == "OFF":
                         display_mode = "AUTO_OFF"
             elif alarm_stat == "ON":
-                if dt.strptime("00:01", "%H:%M").time() <= now.time() < dt.strptime(self.alarm_time.time().strftime("%H:%M"), "%H:%M").time():
+                alarm_time_str = self.alarm_time.time().strftime("%H:%M")
+                if self.time_in_range("00:01", alarm_time_str, now_time):
                     if self.display_override == "OFF":
                         display_mode = "AUTO_OFF"
-                if dt.strptime(self.alarm_time.time().strftime("%H:%M"), "%H:%M").time() <= now.time() < dt.strptime(self.manual_dim_start, "%H:%M").time():
+                if self.time_in_range(alarm_time_str, self.manual_dim_start, now_time):
                     display_mode = "MANUAL_DIM"
         return display_mode
 
