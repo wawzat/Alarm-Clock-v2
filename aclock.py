@@ -60,6 +60,22 @@ class AlarmClock:
             handler.setFormatter(formatter)
             self.logger.addHandler(handler)
 
+        # Audio feature flag
+        self.use_audio = False  # Set to True to enable audio features
+        if self.use_audio:
+            import alsaaudio
+            self.mixer = alsaaudio.Mixer('PCM')
+
+        # Time range configuration for brightness modes
+        self.manual_dim_start = "07:30"
+        self.manual_dim_end = "22:00"
+        self.auto_dim_start = "22:00"
+        self.auto_dim_end = "23:59"
+        #self.auto_off_start = "00:00"
+        #self.auto_off_end = "07:00"
+        self.auto_off_start = "14:40"
+        self.auto_off_end = "17:00"
+
         self.i2c = busio.I2C(board.SCL, board.SDA)
 
         # Initialize I2C for Arcade Button 1x4 (address 0x3A)
@@ -110,12 +126,6 @@ class AlarmClock:
         self.apds.enable_proximity = True
         self.apds.enable_gesture = True
 
-        # Audio feature flag
-        self.use_audio = False  # Set to True to enable audio features
-        if self.use_audio:
-            import alsaaudio
-            self.mixer = alsaaudio.Mixer('PCM')
-
         # State variables
         self.alarm_settings_state = 1
         self.display_settings_state = 1
@@ -139,14 +149,6 @@ class AlarmClock:
         self.auto_dim = "ON"
         self.loop_count = 0
         self.debug = "NO"
-
-        # Time range configuration for brightness modes
-        self.manual_dim_start = "07:30"
-        self.manual_dim_end = "22:00"
-        self.auto_dim_start = "22:00"
-        self.auto_dim_end = "23:59"
-        self.auto_off_start = "00:00"
-        self.auto_off_end = "07:00"
 
         # Rotary encoder action dictionaries
         self.clockwise_alarm_actions = {
