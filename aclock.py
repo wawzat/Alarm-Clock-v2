@@ -260,14 +260,14 @@ class AlarmClock:
                         snooze_triggered = True
                         snooze_time = time.time()
                         break
-                    time.sleep(0.1)
+                    time.sleep(0.01)
                 if snooze_triggered:
                     # Wait for cooldown before allowing alarm to re-trigger
                     print(f"Snooze cooldown for {snooze_cooldown} seconds.")
                     while time.time() - snooze_time < snooze_cooldown:
                         # --- POLL ARCADE BUTTONS DURING SNOOZE COOLDOWN ---
                         self.poll_arcade_buttons()
-                        time.sleep(0.2)
+                        time.sleep(0.01)
                     break
         elif now >= self.alarm_time and self.alarm_stat == "OFF":
             print("alarm mode off")
@@ -314,7 +314,6 @@ class AlarmClock:
                 self.alpha_display.show()
             except Exception as e:
                 self.logger.error("alpha_display.show() error: %s", str(e))
-            #time.sleep(.5)
         # Reset display cache to force refresh
         self.last_num_message = None
         self.last_num_brightness = None
@@ -592,10 +591,10 @@ class AlarmClock:
                             self.arcade_leds[1].value = True  # Turn on white LED
                     for cycle in range(0, 65535, 8000):
                         self.arcade_leds[idx].duty_cycle = cycle
-                        time.sleep(0.003)
+                        time.sleep(0.002)
                     for cycle in range(65534, 0, -8000):
                         self.arcade_leds[idx].duty_cycle = cycle
-                        time.sleep(0.003)
+                        time.sleep(0.002)
                 self.last_press[idx] = now
             elif not pressed:
                 self.arcade_leds[idx].duty_cycle = 0  # Turn off LED
@@ -700,7 +699,7 @@ class AlarmClock:
                 self.last_alpha_message = alpha_message
                 self.last_alpha_brightness = current_brightness
                 self.last_alpha_type = message_type
-            time.sleep(.02)
+            time.sleep(.01)
         return
 
     def display_num_message(self, num_message, display_mode, now):
@@ -731,7 +730,7 @@ class AlarmClock:
                 self.num_display.show()
             except Exception as e:
                 self.logger.error("num_display.show() error: %s", str(e))
-        time.sleep(.02)
+        time.sleep(.01)
         return
 
     def save_settings(self):
@@ -932,7 +931,7 @@ class AlarmClock:
         try:
             while True:
                 self.main_loop_iteration()
-                time.sleep(0.05)
+                time.sleep(0.02)
         except KeyboardInterrupt:
             self.alpha_display.fill(0)
             try:
