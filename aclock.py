@@ -249,18 +249,17 @@ class AlarmClock:
                 while time.time() - start_time < snooze_window:
                     # --- POLL ARCADE BUTTONS DURING SNOOZE WINDOW ---
                     self.poll_arcade_buttons()
-                    if hasattr(self.apds, 'gesture_valid') and self.apds.gesture_valid:
-                        gesture = self.apds.gesture()
-                        print(f"APDS9960 gesture: {gesture}")
-                        # 0x03 = left (right-to-left), 0x04 = right (left-to-right)
-                        if gesture in (0x03, 0x04):
-                            print("Snooze triggered by hand wave (gesture)!")
-                            self.alarm_ringing = 0
-                            self.alarm_time = self.alarm_time + datetime.timedelta(minutes=5)  # 5 min snooze
-                            self.sleep_state = "ON"
-                            snooze_triggered = True
-                            snooze_time = time.time()
-                            break
+                    gesture = self.apds.gesture()
+                    print(f"APDS9960 gesture: {gesture}")
+                    # 0x03 = left (right-to-left), 0x04 = right (left-to-right)
+                    if gesture in (0x03, 0x04):
+                        print("Snooze triggered by hand wave (gesture)!")
+                        self.alarm_ringing = 0
+                        self.alarm_time = self.alarm_time + datetime.timedelta(minutes=5)  # 5 min snooze
+                        self.sleep_state = "ON"
+                        snooze_triggered = True
+                        snooze_time = time.time()
+                        break
                     time.sleep(0.01)
                 if snooze_triggered:
                     # Wait for cooldown before allowing alarm to re-trigger
@@ -797,27 +796,26 @@ class AlarmClock:
         Left-to-right or right-to-left gesture wakes display if off.
         Left-to-right gesture snoozes alarm if ringing.
         """
-        if hasattr(self.apds, 'gesture_valid') and self.apds.gesture_valid:
-            gesture = self.apds.gesture()
-            # 0x03 = left (right-to-left), 0x04 = right (left-to-right)
-            if gesture in (0x03, 0x04):
-                # Wake display if off
-                if self.display_override == "OFF" and (self.display_mode == "AUTO_OFF" or self.display_mode == "MANUAL_OFF"):
-                    self.loop_count = 0
-                    self.display_mode = "AUTO_DIM"
-                    self.display_override = "ON"
-                    while self.loop_count <= 100:
-                        now = self.get_time()
-                        num_message = int(now.strftime("%I"))*100+int(now.strftime("%M"))
-                        self.display_num_message(num_message, self.display_mode, now)
-                        time.sleep(.03)
-                        self.loop_count += 1
-                    # Restore previous off mode
-                    if self.display_mode == "AUTO_DIM":
-                        self.display_mode = "AUTO_OFF"
-                    else:
-                        self.display_mode = "MANUAL_OFF"
-                    self.display_override = "OFF"
+        gesture = self.apds.gesture()
+        # 0x03 = left (right-to-left), 0x04 = right (left-to-right)
+        if gesture in (0x03, 0x04):
+            # Wake display if off
+            if self.display_override == "OFF" and (self.display_mode == "AUTO_OFF" or self.display_mode == "MANUAL_OFF"):
+                self.loop_count = 0
+                self.display_mode = "AUTO_DIM"
+                self.display_override = "ON"
+                while self.loop_count <= 100:
+                    now = self.get_time()
+                    num_message = int(now.strftime("%I"))*100+int(now.strftime("%M"))
+                    self.display_num_message(num_message, self.display_mode, now)
+                    time.sleep(.03)
+                    self.loop_count += 1
+                # Restore previous off mode
+                if self.display_mode == "AUTO_DIM":
+                    self.display_mode = "AUTO_OFF"
+                else:
+                    self.display_mode = "MANUAL_OFF"
+                self.display_override = "OFF"
 
     def update_main_display(self, now):
         """
