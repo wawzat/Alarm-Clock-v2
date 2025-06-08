@@ -838,7 +838,7 @@ class AlarmClock:
                     self.display_mode = "MANUAL_OFF"
                 self.display_override = "OFF"
             # Turn off alarm if snoozed (sleep_state == "ON")
-            elif self.sleep_state == "ON":
+            if self.sleep_state == "ON":
                 print("Gesture detected: turning off snoozed alarm!")
                 self.alarm_ringing = 0
                 self.alarm_stat = "OFF"
