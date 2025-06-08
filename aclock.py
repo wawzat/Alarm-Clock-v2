@@ -269,13 +269,18 @@ class AlarmClock:
                     print(f"APDS9960 gesture: {gesture}")
                     # 0x03 = left (right-to-left), 0x04 = right (left-to-right)
                     if gesture in (0x03, 0x04):
-                        print("Snooze triggered by hand wave (gesture)!")
-                        self.alarm_ringing = 0
-                        self.alarm_time = self.alarm_time + datetime.timedelta(minutes=5)  # 5 min snooze
-                        self.sleep_state = "ON"
-                        snooze_triggered = True
-                        snooze_time = time.time()
-                        break
+                        if self.alarm_ringing == 1:
+                            print("Gesture detected: turning off alarm!")
+                            self.alarm_ringing = 0
+                            self.alarm_stat = "OFF"
+                            self.sleep_state = "OFF"
+                            self.alpha_display.fill(0)
+                            try:
+                                self.alpha_display.show()
+                            except Exception as e:
+                                self.logger.error("alpha_display.show() error: %s", str(e))
+                            break
+                        # If not ringing, allow snooze (should not happen here)
                     time.sleep(0.01)
                 if snooze_triggered:
                     # Wait for cooldown before allowing alarm to re-trigger
