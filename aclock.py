@@ -951,7 +951,7 @@ class AlarmClock:
 
         # Enable gesture sensor only when needed
         gesture_needed = (
-            self.display_mode in ("AUTO_DIM", "AUTO_OFF") or self.alarm_ringing == 1
+            self.display_mode in ("AUTO_DIM", "AUTO_OFF") or self.alarm_ringing == 1 or self.sleep_state == "ON"
         )
         self.set_gesture_sensor_state(gesture_needed)
         if gesture_needed:
