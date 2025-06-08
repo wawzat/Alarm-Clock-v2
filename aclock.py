@@ -810,7 +810,7 @@ class AlarmClock:
 
     def handle_gesture(self, now):
         """
-        Handle gestures from the APDS9960 sensor for display wake and alarm snooze.
+        Handle gestures from the APDS9960 sensor for display wake, alarm snooze, and alarm off when snoozed.
         Only called when gesture sensor is enabled.
         """
         try:
@@ -837,6 +837,17 @@ class AlarmClock:
                 else:
                     self.display_mode = "MANUAL_OFF"
                 self.display_override = "OFF"
+            # Turn off alarm if snoozed (sleep_state == "ON")
+            elif self.sleep_state == "ON":
+                print("Gesture detected: turning off snoozed alarm!")
+                self.alarm_ringing = 0
+                self.alarm_stat = "OFF"
+                self.sleep_state = "OFF"
+                self.alpha_display.fill(0)
+                try:
+                    self.alpha_display.show()
+                except Exception as e:
+                    self.logger.error("alpha_display.show() error: %s", str(e))
 
     def update_main_display(self, now):
         """
