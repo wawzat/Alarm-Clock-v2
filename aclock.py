@@ -193,6 +193,16 @@ class AlarmClock:
         """
         return dt.now()
 
+    def set_gesture_sensor_state(self, enable):
+        """
+        Enable or disable the APDS9960 proximity and gesture sensor.
+        """
+        try:
+            self.apds.enable_proximity = enable
+            self.apds.enable_gesture = enable
+        except Exception as e:
+            self.logger.error("APDS9960 sensor state error: %s", str(e))
+
     def check_alarm(self, now):
         """
         Check if the alarm should ring based on the current time and alarm settings.
@@ -214,6 +224,8 @@ class AlarmClock:
             # --- Flicker reduction: cache last num display value and colon ---
             last_num_message = None
             last_colon = None
+            # Enable gesture sensor for alarm
+            self.set_gesture_sensor_state(True)
             while self.alarm_ringing == 1 and self.alarm_stat == "ON":
                 # --- POLL ARCADE BUTTONS DURING ALARM RING ---
                 self.poll_arcade_buttons()
@@ -249,7 +261,11 @@ class AlarmClock:
                 while time.time() - start_time < snooze_window:
                     # --- POLL ARCADE BUTTONS DURING SNOOZE WINDOW ---
                     self.poll_arcade_buttons()
-                    gesture = self.apds.gesture()
+                    try:
+                        gesture = self.apds.gesture()
+                    except Exception as e:
+                        self.logger.error("APDS9960 gesture() error: %s", str(e))
+                        gesture = None
                     print(f"APDS9960 gesture: {gesture}")
                     # 0x03 = left (right-to-left), 0x04 = right (left-to-right)
                     if gesture in (0x03, 0x04):
@@ -269,6 +285,8 @@ class AlarmClock:
                         self.poll_arcade_buttons()
                         time.sleep(0.01)
                     break
+            # Disable gesture sensor after alarm
+            self.set_gesture_sensor_state(False)
         elif now >= self.alarm_time and self.alarm_stat == "OFF":
             print("alarm mode off")
         return
@@ -793,10 +811,13 @@ class AlarmClock:
     def handle_gesture(self, now):
         """
         Handle gestures from the APDS9960 sensor for display wake and alarm snooze.
-        Left-to-right or right-to-left gesture wakes display if off.
-        Left-to-right gesture snoozes alarm if ringing.
+        Only called when gesture sensor is enabled.
         """
-        gesture = self.apds.gesture()
+        try:
+            gesture = self.apds.gesture()
+        except Exception as e:
+            self.logger.error("APDS9960 gesture() error: %s", str(e))
+            gesture = None
         # 0x03 = left (right-to-left), 0x04 = right (left-to-right)
         if gesture in (0x03, 0x04):
             # Wake display if off
@@ -916,7 +937,15 @@ class AlarmClock:
             self.display_mode = self.debug_brightness(self.auto_dim, self.alarm_stat, self.display_mode, now)
         else:
             self.display_mode = self.brightness(self.auto_dim, self.alarm_stat, self.display_mode, now)
-        self.handle_gesture(now)
+
+        # Enable gesture sensor only when needed
+        gesture_needed = (
+            self.display_mode in ("AUTO_DIM", "AUTO_OFF") or self.alarm_ringing == 1
+        )
+        self.set_gesture_sensor_state(gesture_needed)
+        if gesture_needed:
+            self.handle_gesture(now)
+
         if self.display_mode != "MANUAL_OFF":
             self.update_main_display(now)
         elif (self.display_mode == "MANUAL_OFF" or self.display_mode == "AUTO_OFF"):
