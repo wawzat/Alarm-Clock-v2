@@ -7,7 +7,7 @@ import sys
 import time
 import pygame
 
-volume_level = 0.1 
+volume_level = 0.02 
 
 if len(sys.argv) != 2:
     print("Usage: python playwav.py <filename.wav>")
