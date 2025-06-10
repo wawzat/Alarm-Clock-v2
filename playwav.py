@@ -7,6 +7,8 @@ import sys
 import time
 import pygame
 
+volume_level = 0.1 
+
 if len(sys.argv) != 2:
     print("Usage: python playwav.py <filename.wav>")
     sys.exit(1)
@@ -16,9 +18,9 @@ wav_file = sys.argv[1]
 pygame.mixer.init()
 try:
     pygame.mixer.music.load(wav_file)
-    pygame.mixer.music.set_volume(0.25)  # Set volume to 50%
+    pygame.mixer.music.set_volume(volume_level)  # Set volume
     pygame.mixer.music.play()
-    print(f"Playing: {wav_file} at 50% volume")
+    print(f"Playing: {wav_file} at {int(volume_level * 100)}% volume")
     while pygame.mixer.music.get_busy():
         time.sleep(0.1)
 except Exception as e:
