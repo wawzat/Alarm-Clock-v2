@@ -113,8 +113,9 @@ class AlarmClock:
         # Audio feature flag
         self.use_audio = False  # Set to True to enable audio features
         if self.use_audio:
-            import alsaaudio
-            self.mixer = alsaaudio.Mixer('PCM')
+            import pygame
+            pygame.mixer.init()
+            self.mixer = pygame.mixer
 
         # State variables
         self.alarm_settings_state = 1
@@ -252,8 +253,12 @@ class AlarmClock:
                         vol_increase += 5
                     if loop_count % 10 == 0 and time_decrease <= 2.25:
                         time_decrease += .25
-                    self.mixer.setvolume(self.vol_level+vol_increase)
-                    os.system(f"mpg123 -q {self.alarm_tracks[self.alarm_track]} &")
+                    # Set volume (0.0 to 1.0)
+                    volume = min((self.vol_level + vol_increase) / 100.0, 1.0)
+                    self.mixer.music.set_volume(volume)
+                    if not self.mixer.music.get_busy():
+                        self.mixer.music.load(self.alarm_tracks[self.alarm_track])
+                        self.mixer.music.play()
                 print(f"alarm ring, now: {now.time()} alarm: {self.alarm_time.time()} Count: {loop_count} Vol: {self.vol_level+vol_increase} Ring Time: {3-time_decrease} alarm_ringing: {self.alarm_ringing} sleep_state: {self.sleep_state}")
                 # Check gesture sensor for snooze every 0.1s for up to 2 seconds (or less as time_decrease increases)
                 snooze_window = max(0.5, 2-time_decrease)  # never less than 0.5s
@@ -441,7 +446,8 @@ class AlarmClock:
         """
         self.alarm_track = (self.alarm_track % 6) + 1
         if self.use_audio:
-            os.system(f"mpg123 -q {self.alarm_tracks[self.alarm_track]} &")
+            self.mixer.music.load(self.alarm_tracks[self.alarm_track])
+            self.mixer.music.play()
         return False
 
     def inc_vol_level(self):
@@ -450,8 +456,10 @@ class AlarmClock:
         """
         self.vol_level = (self.vol_level + 1) % 96
         if self.use_audio:
-            self.mixer.setvolume(self.vol_level)
-            os.system(f"mpg123 -q {self.alarm_tracks[self.alarm_track]} &")
+            volume = self.vol_level / 100.0
+            self.mixer.music.set_volume(volume)
+            self.mixer.music.load(self.alarm_tracks[self.alarm_track])
+            self.mixer.music.play()
         return False
 
     def dec_alarm_hour(self):
@@ -492,7 +500,8 @@ class AlarmClock:
         """
         self.alarm_track = 6 if self.alarm_track == 1 else self.alarm_track - 1
         if self.use_audio:
-            os.system(f"mpg123 -q {self.alarm_tracks[self.alarm_track]} &")
+            self.mixer.music.load(self.alarm_tracks[self.alarm_track])
+            self.mixer.music.play()
         return False
 
     def dec_vol_level(self):
@@ -501,8 +510,10 @@ class AlarmClock:
         """
         self.vol_level = 95 if self.vol_level == 0 else self.vol_level - 1
         if self.use_audio:
-            self.mixer.setvolume(self.vol_level)
-            os.system(f"mpg123 -q {self.alarm_tracks[self.alarm_track]} &")
+            volume = self.vol_level / 100.0
+            self.mixer.music.set_volume(volume)
+            self.mixer.music.load(self.alarm_tracks[self.alarm_track])
+            self.mixer.music.play()
         return False
 
     def inc_manual_dim_level(self):
