@@ -3,7 +3,7 @@
 # Issues and todo: alarm pre-selects, auto alarm repeat, issues with dimLevel 0 line 402 auto time setting conflict with manual off
 #   , display override move to display functions? LED blinking when after 8PM
 # 20171118
-# 202506010
+# 202506011
 
 # I2C addresses:
 #   0x70 - 14x4 alphanumeric display
@@ -12,7 +12,6 @@
 #   0x39 - IR, Proximity & Gesture Sensor
 #   0x3A - LED Arcade Button 1x4
 
-import os
 import time
 import datetime
 from datetime import datetime as dt
@@ -222,14 +221,14 @@ class AlarmClock:
             snooze_triggered = False
             snooze_cooldown = 10  # seconds to wait before alarm can re-trigger after snooze
             snooze_time = None
-            # --- Flicker reduction: cache last num display value and colon ---
+            # Flicker reduction: cache last num display value and colon
             last_num_message = None
             last_colon = None
             # Enable gesture sensor for alarm
             self.set_gesture_sensor_state(True)
             initial_volume = self.vol_level  # Use the alarm setting's volume
             while self.alarm_ringing == 1 and self.alarm_stat == "ON":
-                # --- POLL ARCADE BUTTONS DURING ALARM RING ---
+                # Poll arcade buttons during alarm ring
                 self.poll_arcade_buttons()
                 loop_count += 1
                 self.alpha_display.fill(0)
@@ -266,7 +265,7 @@ class AlarmClock:
                 snooze_window = max(0.5, 2-time_decrease)  # never less than 0.5s
                 start_time = time.time()
                 while time.time() - start_time < snooze_window:
-                    # --- POLL ARCADE BUTTONS DURING SNOOZE WINDOW ---
+                    # Poll arcade buttons during snooze window
                     self.poll_arcade_buttons()
                     try:
                         gesture = self.apds.gesture()
