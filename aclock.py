@@ -931,7 +931,7 @@ class AlarmClock:
                 alpha_message = self.vol_level
                 self.display_alpha_message("FLOAT", alpha_message, self.display_mode)
                 if self.use_audio:
-                    self.mixer.setvolume(self.vol_level)
+                    self.mixer.music.set_volume(self.vol_level / 100.0)
                     os.system(f"mpg123 -q {self.alarm_tracks[self.alarm_track]} &")
         elif self.display_settings_state == 2:
             if self.display_set == 1:
