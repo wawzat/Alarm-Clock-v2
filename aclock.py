@@ -249,17 +249,18 @@ class AlarmClock:
                     last_num_message = num_message
                     last_colon = colon_state
                 if self.use_audio:
-                    if loop_count % 10 == 0 and (self.vol_level + vol_increase) <= 90:
-                        vol_increase += 5
-                    if loop_count % 10 == 0 and time_decrease <= 2.25:
-                        time_decrease += .25
+                    # Volume starts at 1% and increases by 2% each step: 1%, 3%, 5%, ...
+                    if loop_count == 1:
+                        vol_increase = 0  # Start at 1%
+                    elif loop_count % 10 == 0:
+                        vol_increase += 2  # Increase by 2% every 10 loops
                     # Set volume (0.0 to 1.0)
-                    volume = min((self.vol_level + vol_increase) / 100.0, 1.0)
+                    volume = min((1 + vol_increase) / 100.0, 1.0)
                     self.mixer.music.set_volume(volume)
                     if not self.mixer.music.get_busy():
                         self.mixer.music.load(self.alarm_tracks[self.alarm_track])
                         self.mixer.music.play()
-                print(f"alarm ring, now: {now.time()} alarm: {self.alarm_time.time()} Count: {loop_count} Vol: {self.vol_level+vol_increase} Ring Time: {3-time_decrease} alarm_ringing: {self.alarm_ringing} sleep_state: {self.sleep_state}")
+                print(f"alarm ring, now: {now.time()} alarm: {self.alarm_time.time()} Count: {loop_count} Vol: {1+vol_increase} Ring Time: {3-time_decrease} alarm_ringing: {self.alarm_ringing} sleep_state: {self.sleep_state}")
                 # Check gesture sensor for snooze every 0.1s for up to 2 seconds (or less as time_decrease increases)
                 snooze_window = max(0.5, 2-time_decrease)  # never less than 0.5s
                 start_time = time.time()
