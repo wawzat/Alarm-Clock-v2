@@ -3,7 +3,7 @@
 # Issues and todo: alarm pre-selects, auto alarm repeat, issues with dimLevel 0 line 402 auto time setting conflict with manual off
 #   , display override move to display functions? LED blinking when after 8PM
 # 20171118
-# 20250607
+# 202506010
 
 # I2C addresses:
 #   0x70 - 14x4 alphanumeric display
@@ -43,7 +43,7 @@ class AlarmClock:
     """
     SETTINGS_FILE = "settings.json"
     PERSISTED_SETTINGS = [
-        "alarm_hour", "alarm_minute", "period", "alarm_stat", "alarm_track", "vol_level",
+        "alarm_hour", "alarm_minute", "period", "alarm_track", "vol_level",
         "manual_dim_level", "auto_dim_level", "auto_dim", "display_mode", "display_override"
     ]
 
@@ -800,7 +800,6 @@ class AlarmClock:
             self.alarm_hour = settings.get("alarm_hour", self.alarm_hour)
             self.alarm_minute = settings.get("alarm_minute", self.alarm_minute)
             self.period = settings.get("period", self.period)
-            self.alarm_stat = settings.get("alarm_stat", self.alarm_stat)
             self.alarm_track = settings.get("alarm_track", self.alarm_track)
             self.vol_level = settings.get("vol_level", self.vol_level)
             self.manual_dim_level = settings.get("manual_dim_level", self.manual_dim_level)
