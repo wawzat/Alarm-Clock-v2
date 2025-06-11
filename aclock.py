@@ -111,7 +111,7 @@ class AlarmClock:
         self.apds.enable_gesture = True
 
         # Audio feature flag
-        self.use_audio = False  # Set to True to enable audio features
+        self.use_audio = True  # Set to True to enable audio features
         if self.use_audio:
             import pygame
             pygame.mixer.init()
