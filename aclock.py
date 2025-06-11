@@ -1,7 +1,5 @@
 # Alarm clock with LED Display
 # James S. Lucas
-# Issues and todo: alarm pre-selects, auto alarm repeat, issues with dimLevel 0 line 402 auto time setting conflict with manual off
-#   , display override move to display functions? LED blinking when after 8PM
 # 20171118
 # 202506011
 
