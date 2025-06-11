@@ -10,9 +10,6 @@
 #   0x39 - IR, Proximity & Gesture Sensor
 #   0x3A - LED Arcade Button 1x4
 
-import os
-os.environ["BLINKA_FORCE_NO_GPIO"] = "1"
-
 import time
 import datetime
 from datetime import datetime as dt
