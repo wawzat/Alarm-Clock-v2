@@ -926,13 +926,11 @@ class AlarmClock:
             elif self.alarm_set == 5:
                 alpha_message = self.alarm_track
                 self.display_alpha_message("FLOAT", alpha_message, self.display_mode)
-                # Removed redundant os.system call for mpg123
             elif self.alarm_set == 6:
                 alpha_message = self.vol_level
                 self.display_alpha_message("FLOAT", alpha_message, self.display_mode)
                 if self.use_audio:
                     self.mixer.music.set_volume(self.vol_level / 100.0)
-                    os.system(f"mpg123 -q {self.alarm_tracks[self.alarm_track]} &")
         elif self.display_settings_state == 2:
             if self.display_set == 1:
                 alpha_message = self.manual_dim_level
