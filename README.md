@@ -117,7 +117,7 @@ The alarm clock is controlled using a rotary encoder (with push button) and two 
     - `sudo apt install python3-pip -y`
     - `sudo apt install screen`
     - `sudo apt install vim` (or use pre-installed nano instead)
-6. **Git Setup & Repo Cloning**
+6. **Git Setup, Repo Cloning & Python Library Installation**
     - `sudo apt install git -y`
     - `git config --global user.name "Your Name"`
     - `git config --global user.email "Your email address"`
@@ -125,6 +125,7 @@ The alarm clock is controlled using a rotary encoder (with push button) and two 
     - `cd Alarm-Clock-v2`
     - `python -m venv .venv --system-site-packages`
     - `source .venv/bin/activate`
+    - `python -m pip install -r requirements.txt`
 7. **Speaker Bonnet Configurations**
     - `wget https://github.com/adafruit/Raspberry-Pi-Installer-Scripts/raw/main/i2samp.py`
     - `sudo -E env PATH=$PATH python3 i2samp.py`  
