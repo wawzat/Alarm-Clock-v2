@@ -11,11 +11,11 @@ Schematic
 3. Alarm starts quietly and gradually gets louder
 4. Wave to snooze and cancel alarms
 5. Automatically dim and then turn off the display at preset times
-5. Wave to wake the display when it is off
+5. Gesture to wake the display when it is off
  
 
 ## Operation  
-The alarm clock is controlled using a rotary encoder (with push button) and two additional pushbuttons: one for Alarm Settings and one for Display Settings. The LED displays show the current time, alarm settings, and other status information.
+The alarm clock is controlled using a rotary encoder (with push button) and two additional pushbuttons: one for Alarm Settings and one for Display Settings. Two LED displays; one shows the current time and the other shows alarm & display settings, and other status information.
 
 ### Normal Time Display
 - **Default Mode:** The numeric display shows the current time in HH:MM format. The colon blinks every second.
