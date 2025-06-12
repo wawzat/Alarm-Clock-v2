@@ -88,4 +88,5 @@ The alarm clock is controlled using a rotary encoder (with push button) and two 
 - The speaker bonnet has a 2 x 20 Raspberry Pi female connector that is slim and has through holes.
 - Plug the extra tall stacking header on the Raspberry Pi.
 - Press the speaker bonnet as far as it will go onto stacking header pins. This leaves enough length of the pins exposed to then stack the Qwiic pHAT on top.
-2. All of the other devices are connected to the Qwiic pHAT via Qwiic or Stemma QT cables.
+2. Connect the speaker plug to the speaker bonnet.
+3. All of the other devices are connected to the Qwiic pHAT via Qwiic or Stemma QT cables.
