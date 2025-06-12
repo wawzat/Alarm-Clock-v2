@@ -90,3 +90,49 @@ The alarm clock is controlled using a rotary encoder (with push button) and two 
 - Press the speaker bonnet as far as it will go onto stacking header pins. This leaves enough length of the pins exposed to then stack the Qwiic pHAT on top.
 2. Connect the speaker plug to the speaker bonnet.
 3. All of the other devices are connected to the Qwiic pHAT via Qwiic or Stemma QT cables.
+
+## Raspberry Pi Setup
+1. **SD Card Preparation**
+    - Download & Open Raspberry Pi Imager  
+      - Install the latest version from [raspberrypi.com](https://www.raspberrypi.com/)
+    - Select Raspberry Pi OS Lite 64-bit
+    - Configure Advanced Settings  
+      - Set Wi-Fi SSID & Password (if using Wi-Fi)
+      - Set Timezone
+    - Flash SD Card  
+      - Click **Write** to install OS
+    - Enable SSH Manually  
+      - Create an empty file named `ssh` in the boot partition
+2. **Initial Setup**
+    - Boot Raspberry Pi and connect it to your network
+    - Connect via SSH Terminal
+3. **System Configuration**
+    - Run Raspberry Pi Config Tool  
+      - `sudo raspi-config`
+      - Enable I2C under Interfacing Options → I2C → Enable
+      - Expand the filesystem
+4. **Upgrade Raspberry Pi OS**
+    - `sudo apt update && sudo apt upgrade -y`
+5. **Install Dependencies and Utilities**
+    - `sudo apt install python3-pip -y`
+    - `sudo apt install screen`
+    - `sudo apt install vim` (or use pre-installed nano instead)
+6. **Git Setup & Repo Cloning**
+    - `sudo apt install git -y`
+    - `git config --global user.name "Your Name"`
+    - `git config --global user.email "Your email address"`
+    - `git clone https://github.com/wawzat/Alarm-Clock-v2.git`
+    - `cd Alarm-Clock-v2`
+    - `python -m venv .venv --system-site-packages`
+    - `source .venv/bin/activate`
+7. **Speaker Bonnet Configurations**
+    - `wget https://github.com/adafruit/Raspberry-Pi-Installer-Scripts/raw/main/i2samp.py`
+    - `sudo -E env PATH=$PATH python3 i2samp.py`  
+      - Follow [Adafruit Speaker Bonnet guide](https://learn.adafruit.com/adafruit-speaker-bonnet-for-raspberry-pi)
+    - `sudo vim ~/.bashrc`  
+      - Add to end of file:  
+        `export PYGAME_HIDE_SUPPORT_PROMPT=1`
+8. **Final Step**
+    - `sudo reboot`
+    - `source .venv/bin/activate`
+    - `python aclock.py`
