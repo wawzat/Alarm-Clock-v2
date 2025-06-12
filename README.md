@@ -64,7 +64,7 @@ The alarm clock is controlled using a rotary encoder (with push button) and two 
 ## Parts List
 1. 1 x Raspberry Pi Model Zero 2 W
 2. 1 x SparkFun Qwiic pHAT v2.0 for Raspberry Pi - STEMMA QT / Qwiic PID: 5142
-3. 1 x USB power supply for Raspberry Pi
+3. 1 x USB power supply for Raspberry Pi (Recommend at least 2.4 amp power supply or higher)
 4. 1 x Adafruit 1.2" 4-Digit 7-Segment Display w/I2C Backpack - Yellow. Product ID: 1269
 5. 1 x Adafruit Quad Alphanumeric Display - Red 0.54" Digits w/ I2C Backpack - STEMMA QT / Qwiic. Product ID: 1911
 6. 1 x Adafruit I2C Stemma QT Rotary Encoder Breakout with Encoder - STEMMA QT / Qwiic PN 5880
@@ -80,3 +80,12 @@ The alarm clock is controlled using a rotary encoder (with push button) and two 
 16. 1 x 6" male x female DuPont connector Stemma QT cable
 17. 1 x 6" male x female DuPont connector Stemma QT cable modified with additional DuPont female connector.
 18. 1 x 6" DuPont female x 0.1" pin (for 7-Segment 5v power)
+19. 1 x USB C Jack to Micro USB Jack Round Panel Mount Adapter. Product ID: 4260
+20. 1 x Micro USB to Micro USB OTG Cable - 10-12" / 25-30cm long. Product ID: 3610
+
+## Assembly
+1. Raspberry Pi / Speaker Bonnet / Qwiic pHAT Stack
+- The speaker bonnet has a 2 x 20 Raspberry Pi female connector that is slim and has through holes.
+- Plug the extra tall stacking header on the Raspberry Pi.
+- Press the speaker bonnet as far as it will go onto stacking header pins. This leaves enough length of the pins exposed to then stack the Qwiic pHAT on top.
+2. All of the other devices are connected to the Qwiic pHAT via Qwiic or Stemma QT cables.
