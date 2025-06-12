@@ -126,7 +126,7 @@ The alarm clock is controlled using a rotary encoder (with push button) and two 
     - `python -m venv .venv --system-site-packages`
     - `source .venv/bin/activate`
     - `python -m pip install -r requirements.txt`
-7. **Speaker Bonnet Configurations**
+7. **Speaker Bonnet Configuration**
     - `wget https://github.com/adafruit/Raspberry-Pi-Installer-Scripts/raw/main/i2samp.py`
     - `sudo -E env PATH=$PATH python3 i2samp.py`  
       - Follow [Adafruit Speaker Bonnet guide](https://learn.adafruit.com/adafruit-speaker-bonnet-for-raspberry-pi)
