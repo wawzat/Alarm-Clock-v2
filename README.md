@@ -7,9 +7,10 @@ Schematic
 
 ## Features  
 1. Dimmable
-2. Choose alarm sound
+2. Choose alarm sound and initial volume
 3. Alarm starts quietly and gradually gets louder
-4. Wave to snooze
+4. Wave to snooze and cancel alarms
+5. Automatically dim and then turn off the display at preset times
 5. Wave to wake the display when it is off
  
 
@@ -18,7 +19,7 @@ The alarm clock is controlled using a rotary encoder (with push button) and two 
 
 ### Normal Time Display
 - **Default Mode:** The numeric display shows the current time in HH:MM format. The colon blinks every second.
-- **Brightness:** The display brightness is automatically or manually controlled based on the selected mode.
+- **Brightness:** The display brightness is manually controlled and can optionally be set to be automatically dimmed and then turned off based on time of day.
 
 ### Setting the Alarm
 1. **Enter Alarm Setting Mode:**
@@ -54,7 +55,7 @@ The alarm clock is controlled using a rotary encoder (with push button) and two 
 - **Wake Display:** If the display is off, wave your hand in front of the EDS sensor to temporarily wake it.
 
 ### Persistent Storage
-- **Automatic Saving:** Alarm and display settings (such as alarm time, alarm status, brightness, alarm track, volume, and display override) are automatically saved to persistent storage. Settings are restored after a power cycle or reboot.
+- **Automatic Saving:** Alarm and display settings (such as alarm time, brightness, alarm track, volume, and auto dim/off display) are automatically saved to persistent storage. Settings are restored after a power cycle or reboot.
 
 ### Notes
 - All settings and states are displayed on the alphanumeric display.
@@ -68,12 +69,14 @@ The alarm clock is controlled using a rotary encoder (with push button) and two 
 5. 1 x Adafruit Quad Alphanumeric Display - Red 0.54" Digits w/ I2C Backpack - STEMMA QT / Qwiic. Product ID: 1911
 6. 1 x Adafruit I2C Stemma QT Rotary Encoder Breakout with Encoder - STEMMA QT / Qwiic PN 5880
 7. 1 x Adafruit APDS9960 Proximity, Light, RGB, and Gesture Sensor - STEMMA QT / Qwiic PID: 3595
-8. 1 x Adafruit LED Arcade Button 1x4 - STEMMA QT I2C Breakout - STEMMA QT / Qwiic PID: 5296
-9. 1 x Mini LED Arcade Button - 24mm Translucent Clear PID: 3429
-10. 1 x Mini LED Arcade Button - 24mm Translucent Yellow PID: 3431
-11. 4 x Arcade Button Quick-Connect Wire Pairs - 0.11" Product ID: 1152
-12. 3 x 7" male x male Stemma QT cable
-13. 1 x 6" male x female DuPont connector Stemma QT cable
-14. 1 x 6" male x female DuPont connector Stemma QT cable modified with additional DuPont female connector.
-15. 1 x 6" DuPont female x 0.1" pin (for 7-Segment 5v power)
-16. iHome iM60LT Rechargeable Mini Speaker - Blue
+8. 1 x Adafruit I2S 3W Stereo Speaker Bonnet for Raspberry Pi - Mini Kit PID: 3346
+9. 1 x Stereo Enclosed Speaker Set - 3W 4 Ohm PID: 1669
+10. Stacking Header for Pi A+/B+/Pi 2/Pi 3 - 2x20 Extra Tall Header PID: 1979
+11. 1 x Adafruit LED Arcade Button 1x4 - STEMMA QT I2C Breakout - STEMMA QT / Qwiic PID: 5296
+12. 1 x Mini LED Arcade Button - 24mm Translucent Clear PID: 3429
+13. 1 x Mini LED Arcade Button - 24mm Translucent Yellow PID: 3431
+14. 4 x Arcade Button Quick-Connect Wire Pairs - 0.11" Product ID: 1152
+15. 3 x 7" male x male Stemma QT cable
+16. 1 x 6" male x female DuPont connector Stemma QT cable
+17. 1 x 6" male x female DuPont connector Stemma QT cable modified with additional DuPont female connector.
+18. 1 x 6" DuPont female x 0.1" pin (for 7-Segment 5v power)
