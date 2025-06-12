@@ -1,6 +1,8 @@
 # wave.py
 # Detects left-to-right and right-to-left gestures using the Adafruit APDS9960 sensor
 # Prints the gesture direction to the terminal
+# This program was used to test the APDS9960 sensor for wave detection.
+# It is stand-alone and not required by aclock.py.
 
 import time
 import board

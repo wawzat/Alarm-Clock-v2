@@ -2,6 +2,7 @@
 """
 playwav.py - Play a .wav file using Adafruit Speaker Bonnet (I2S audio) on Raspberry Pi.
 Usage: python playwav.py <filename.wav>
+This program was used to test playing sounds. It is stand-alone and not required by aclock.py. 
 """
 import sys
 import time

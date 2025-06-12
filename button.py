@@ -1,3 +1,5 @@
+# This program was used to test the Adafruit LED Arcade Button 1x4 with two buttons and two LEDs.
+# # It is stand-alone and not required by aclock.py.
 import time
 import board
 import digitalio
