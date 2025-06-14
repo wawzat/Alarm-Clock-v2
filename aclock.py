@@ -273,7 +273,7 @@ class AlarmClock:
                     except Exception as e:
                         self.logger.error("APDS9960 gesture() error: %s", str(e))
                         gesture = None
-                    print(f"APDS9960 gesture: {gesture}")
+                    # print(f"APDS9960 gesture: {gesture}")
                     # 0x03 = left (right-to-left), 0x04 = right (left-to-right)
                     if gesture == 0x03:
                         if self.alarm_ringing == 1:
