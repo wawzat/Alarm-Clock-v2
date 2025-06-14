@@ -1,7 +1,7 @@
 # Alarm clock with LED Display
 # James S. Lucas
 # 20171118
-# 202506011
+# 202506014
 
 # I2C addresses:
 #   0x70 - 14x4 alphanumeric display
@@ -212,7 +212,10 @@ class AlarmClock:
         loop_count = 0
         vol_increase = 0
         time_decrease = 0
-        print(f"time: {now.time()} {self.period} alarm time: {self.alarm_time.time()}")
+        # Print the time only once per second
+        if not hasattr(self, '_last_printed_second') or self._last_printed_second != now.second:
+            print(f"time: {now.strftime('%H:%M:%S')} {self.period} alarm time: {self.alarm_time.strftime('%H:%M:%S')}")
+            self._last_printed_second = now.second
         if now.strftime("%p") == self.period and now.time() >= self.alarm_time.time() and self.alarm_stat == "ON":
             self.alarm_ringing = 1
             self.sleep_state = "OFF"
