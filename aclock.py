@@ -344,6 +344,12 @@ class AlarmClock:
             debug_lines.append("alarm_settings_callback: Entering alarm settings mode")
             self.alarm_settings_state = 2
             self.alarm_set = 1
+            # Cancel display settings mode if active
+            if self.display_settings_state == 2:
+                debug_lines.append("alarm_settings_callback: Cancelling display settings mode")
+                self.display_settings_state = 1
+                self.display_set = 1
+                self.clear_alpha_display()
         elif self.alarm_settings_state == 2:
             debug_lines.append("alarm_settings_callback: Exiting alarm settings mode")
             self.alarm_settings_state = 1
@@ -376,7 +382,12 @@ class AlarmClock:
             return
         if self.display_settings_state == 1:
             debug_lines.append("display_settings_callback: Entering display mode")
-            self.alarm_settings_state = 1
+            # Cancel alarm settings mode if active
+            if self.alarm_settings_state == 2:
+                debug_lines.append("display_settings_callback: Cancelling alarm settings mode")
+                self.alarm_settings_state = 1
+                self.alarm_set = 1
+                self.clear_alpha_display()
             if self.alarm_ringing == 1:
                 self.alarm_ringing = 0
                 self.alarm_stat = "OFF"
