@@ -791,56 +791,6 @@ class AlarmClock:
             self.logger.error("num_display.show() error: %s", str(e))
         time.sleep(.01)
 
-    def display_num_message(self, num_message, display_mode, now):
-        """
-        Deprecated: Use update_main_display or _update_numeric_display instead.
-        """
-        # Kept for backward compatibility, but now uses the unified helper
-        if display_mode in ("MANUAL_OFF", "AUTO_OFF"):
-            self._update_numeric_display(num_message, 0.0, now.second % 2, force=True, off=True)
-        elif display_mode == "AUTO_DIM":
-            dim_level = self.auto_dim_level / 15.0
-            self._update_numeric_display(num_message, dim_level, now.second % 2, force=True)
-        elif display_mode == "MANUAL_DIM":
-            dim_level = self.manual_dim_level / 15.0
-            self._update_numeric_display(num_message, dim_level, now.second % 2, force=True)
-        else:
-            self._update_numeric_display(num_message, self.num_display.brightness, now.second % 2, force=True)
-
-    def update_main_display(self, now):
-        """
-        Update the main numeric display with the current time and brightness.
-
-        Args:
-            now (datetime): The current datetime.
-        """
-        num_message = int(now.strftime("%I"))*100+int(now.strftime("%M"))
-        if self.display_mode == "AUTO_DIM":
-            current_brightness = self.auto_dim_level / 15.0
-        elif self.display_mode == "MANUAL_DIM":
-            current_brightness = self.manual_dim_level / 15.0
-        elif self.display_mode in ("MANUAL_OFF", "AUTO_OFF"):
-            self._update_numeric_display(num_message, 0.0, now.second % 2, force=True, off=True)
-            self.update_alpha_display(now)
-            return
-        else:
-            current_brightness = self.num_display.brightness
-        self._update_numeric_display(num_message, current_brightness, now.second % 2)
-        self.update_alpha_display(now)
-
-    def save_settings(self):
-        """
-        Save the current settings to a JSON file for persistence.
-        """
-        settings = {k: getattr(self, k) for k in self.PERSISTED_SETTINGS}
-        # Save alarm_time as string
-        settings["alarm_time"] = self.alarm_time.strftime("%H:%M")
-        try:
-            with open(self.SETTINGS_FILE, "w") as f:
-                json.dump(settings, f)
-        except Exception as e:
-            self.logger.error("Failed to save settings: %s", str(e))
-
     def load_settings(self):
         """
         Load settings from a JSON file, updating alarm and display state variables.
