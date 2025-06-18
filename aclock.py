@@ -807,6 +807,27 @@ class AlarmClock:
         else:
             self._update_numeric_display(num_message, self.num_display.brightness, now.second % 2, force=True)
 
+    def update_main_display(self, now):
+        """
+        Update the main numeric display with the current time and brightness.
+
+        Args:
+            now (datetime): The current datetime.
+        """
+        num_message = int(now.strftime("%I"))*100+int(now.strftime("%M"))
+        if self.display_mode == "AUTO_DIM":
+            current_brightness = self.auto_dim_level / 15.0
+        elif self.display_mode == "MANUAL_DIM":
+            current_brightness = self.manual_dim_level / 15.0
+        elif self.display_mode in ("MANUAL_OFF", "AUTO_OFF"):
+            self._update_numeric_display(num_message, 0.0, now.second % 2, force=True, off=True)
+            self.update_alpha_display(now)
+            return
+        else:
+            current_brightness = self.num_display.brightness
+        self._update_numeric_display(num_message, current_brightness, now.second % 2)
+        self.update_alpha_display(now)
+
     def save_settings(self):
         """
         Save the current settings to a JSON file for persistence.
