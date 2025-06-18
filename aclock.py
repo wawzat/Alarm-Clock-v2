@@ -28,14 +28,16 @@ import json
 
 class AlarmClock:
     """
-    AlarmClock provides an alarm clock with LED display, rotary encoder controls, and optional audio features.
+    AlarmClock provides an alarm clock with two LED displays, pushbutton, proximity / gesture and 
+    rotary encoder controls, and audio output.
+
 
     Features:
         - Alarm time and status management
-        - LED display brightness and override controls
+        - LED display brightness and automatic dimming controls
         - Rotary encoder and button input handling
         - Persistent settings storage and loading
-        - Optional audio playback for alarm
+        - Audio playback for alarm
         - Proximity and Gesture sensor for snooze and display wake
     """
     SETTINGS_FILE = "settings.json"
@@ -68,8 +70,7 @@ class AlarmClock:
         # LED Pins: 12 (yellow), 13 (white)
         BUTTON_PINS = (18, 19)
         LED_PINS = (12, 13)  
-
-        # Set up I2C and Seesaw device
+        # Set up I2C and Seesaw device for Arcade Button 1x4
         self.arcade = Seesaw(self.i2c, addr=ARCADE_BUTTON_ADDR)
 
         # Set up digitalio for buttons
@@ -80,14 +81,11 @@ class AlarmClock:
             button.pull = digitalio.Pull.UP
             self.arcade_buttons.append(button)
 
-        # Set up PWMOut for LEDs
+        # Set up PWMOut for button LEDs
         self.arcade_leds = [PWMOut(self.arcade, pin) for pin in LED_PINS]
 
         # Track last button state for edge detection
         self.last_arcade_button_states = [btn.value for btn in self.arcade_buttons]
-
-        # Define increment for alarm minute adjustment
-        self.minute_incr = 1
 
         # Create display instances
         self.alpha_display = Seg14x4(self.i2c)
@@ -113,6 +111,9 @@ class AlarmClock:
             import pygame
             pygame.mixer.init()
             self.mixer = pygame.mixer
+
+        # Define increment for alarm minute adjustment
+        self.minute_incr = 1
 
         # State variables
         self.alarm_settings_state = 1
@@ -273,7 +274,6 @@ class AlarmClock:
                     except Exception as e:
                         self.logger.error("APDS9960 gesture() error: %s", str(e))
                         gesture = None
-                    # print(f"APDS9960 gesture: {gesture}")
                     # 0x03 = left (right-to-left), 0x04 = right (left-to-right)
                     if gesture == 0x03:
                         if self.alarm_ringing == 1:
@@ -420,7 +420,7 @@ class AlarmClock:
             print("\n".join(debug_lines), end="\n")
             return
 
-    # --- Rotary encoder action methods ---
+    # Rotary encoder action methods
     def inc_alarm_hour(self):
         """
         Increment the alarm hour, wrapping around at 12.
@@ -633,8 +633,6 @@ class AlarmClock:
                             self.alpha_display.show()
                         except Exception as e:
                             self.logger.error("alpha_display.show() error: %s", str(e))
-                        # Do NOT clear or update the numeric display here
-                        # Do NOT call display_settings_callback or alarm_settings_callback in this case
                     else:
                         if idx == 0:
                             # Switch 1 (yellow): Display settings
@@ -646,6 +644,7 @@ class AlarmClock:
                             self.arcade_leds[1].value = True  # Turn on white LED
                     # Set max brightness for each button LED
                     max_brightness = 65535 if idx == 0 else 20000  # Lower for alarm settings button
+                    # Gradually increase and decrease brightness for visual feedback
                     for cycle in range(0, max_brightness, 8000):
                         self.arcade_leds[idx].duty_cycle = cycle
                         time.sleep(0.002)
@@ -759,36 +758,75 @@ class AlarmClock:
             time.sleep(.01)
         return
 
-    def display_num_message(self, num_message, display_mode, now):
+    def _update_numeric_display(self, num_message, brightness, colon, force=False, off=False):
         """
-        Display a message on the numeric display, handling brightness and display mode.
+        Low-level helper to update the numeric display.
 
         Args:
             num_message: The message to display (numeric).
-            display_mode (str): The current display mode.
-            now (datetime): The current datetime (for colon blink).
+            brightness (float): Brightness value (0.0-1.0).
+            colon (bool): Whether to show the colon (for blink).
+            force (bool): If True, update even if value/brightness unchanged.
+            off (bool): If True, turn off display.
         """
-        if (display_mode == "MANUAL_OFF" or display_mode == "AUTO_OFF"):
+        if off:
             self.num_display.fill(0)
             try:
                 self.num_display.show()
             except Exception as e:
                 self.logger.error("num_display.show() error: %s", str(e))
-        elif display_mode == "AUTO_DIM" or display_mode == "MANUAL_DIM":
-            if display_mode == "AUTO_DIM":
-                dim_level = self.auto_dim_level
-            elif display_mode == "MANUAL_DIM":
-                dim_level = self.manual_dim_level
+            self.last_num_message = None
+            self.last_num_brightness = None
+            return
+        if force or (num_message != getattr(self, 'last_num_message', None)) or (brightness != getattr(self, 'last_num_brightness', None)):
             self.num_display.fill(0)
             self.num_display.print(str(num_message))
-            self.num_display.colon = now.second % 2
-            self.num_display.brightness = dim_level / 15.0
-            try:
-                self.num_display.show()
-            except Exception as e:
-                self.logger.error("num_display.show() error: %s", str(e))
+            self.num_display.brightness = brightness
+            self.last_num_message = num_message
+            self.last_num_brightness = brightness
+        self.num_display.colon = colon
+        try:
+            self.num_display.show()
+        except Exception as e:
+            self.logger.error("num_display.show() error: %s", str(e))
         time.sleep(.01)
-        return
+
+    def display_num_message(self, num_message, display_mode, now):
+        """
+        Deprecated: Use update_main_display or _update_numeric_display instead.
+        """
+        # Kept for backward compatibility, but now uses the unified helper
+        if display_mode in ("MANUAL_OFF", "AUTO_OFF"):
+            self._update_numeric_display(num_message, 0.0, now.second % 2, force=True, off=True)
+        elif display_mode == "AUTO_DIM":
+            dim_level = self.auto_dim_level / 15.0
+            self._update_numeric_display(num_message, dim_level, now.second % 2, force=True)
+        elif display_mode == "MANUAL_DIM":
+            dim_level = self.manual_dim_level / 15.0
+            self._update_numeric_display(num_message, dim_level, now.second % 2, force=True)
+        else:
+            self._update_numeric_display(num_message, self.num_display.brightness, now.second % 2, force=True)
+
+    def update_main_display(self, now):
+        """
+        Update the main numeric display with the current time and brightness.
+
+        Args:
+            now (datetime): The current datetime.
+        """
+        num_message = int(now.strftime("%I"))*100+int(now.strftime("%M"))
+        if self.display_mode == "AUTO_DIM":
+            current_brightness = self.auto_dim_level / 15.0
+        elif self.display_mode == "MANUAL_DIM":
+            current_brightness = self.manual_dim_level / 15.0
+        elif self.display_mode in ("MANUAL_OFF", "AUTO_OFF"):
+            self._update_numeric_display(num_message, 0.0, now.second % 2, force=True, off=True)
+            self.update_alpha_display(now)
+            return
+        else:
+            current_brightness = self.num_display.brightness
+        self._update_numeric_display(num_message, current_brightness, now.second % 2)
+        self.update_alpha_display(now)
 
     def save_settings(self):
         """
@@ -863,8 +901,7 @@ class AlarmClock:
                 self.display_override = "ON"
                 while self.loop_count <= 100:
                     now = self.get_time()
-                    num_message = int(now.strftime("%I"))*100+int(now.strftime("%M"))
-                    self.display_num_message(num_message, self.display_mode, now)
+                    self.update_main_display(now)
                     time.sleep(.03)
                     self.loop_count += 1
                 # Restore previous off mode
