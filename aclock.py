@@ -531,18 +531,18 @@ class AlarmClock:
 
     def inc_manual_dim_level(self):
         """
-        Increment the manual display dim level, wrapping around at 15.
+        Increment the manual display dim level, wrapping around at 16 (0=off, 16=brightest).
         """
         self.display_mode = "MANUAL_DIM"
-        self.manual_dim_level = (self.manual_dim_level + 1) % 16
+        self.manual_dim_level = (self.manual_dim_level + 1) % 17
         return False
 
     def dec_manual_dim_level(self):
         """
-        Decrement the manual display dim level, wrapping around at 0.
+        Decrement the manual display dim level, wrapping around at 0 (0=off, 16=brightest).
         """
         self.display_mode = "MANUAL_DIM"
-        self.manual_dim_level = (self.manual_dim_level - 1) % 16
+        self.manual_dim_level = (self.manual_dim_level - 1) % 17
         return False
 
     def toggle_display_override(self):
@@ -739,7 +739,11 @@ class AlarmClock:
             elif display_mode == "MANUAL_DIM":
                 dim_level = self.manual_dim_level
             # Only update if value or brightness or type changed
-            current_brightness = dim_level / 15.0
+            # 0 = off, 16 = brightest, increments of 1/16
+            if dim_level == 0:
+                current_brightness = 0.0
+            else:
+                current_brightness = dim_level / 16.0
             if (alpha_message != self.last_alpha_message) or (current_brightness != self.last_alpha_brightness) or (message_type != self.last_alpha_type):
                 self.alpha_display.fill(0)
                 if message_type == "FLOAT":
@@ -862,9 +866,16 @@ class AlarmClock:
         num_message = int(now.strftime("%I"))*100+int(now.strftime("%M"))
         # Determine current brightness
         if self.display_mode == "AUTO_DIM":
-            current_brightness = self.auto_dim_level / 15.0
+            dim_level = self.auto_dim_level
         elif self.display_mode == "MANUAL_DIM":
-            current_brightness = self.manual_dim_level / 15.0
+            dim_level = self.manual_dim_level
+        else:
+            dim_level = None
+        if dim_level is not None:
+            if dim_level == 0:
+                current_brightness = 0.0
+            else:
+                current_brightness = dim_level / 16.0
         else:
             current_brightness = self.num_display.brightness
         # Only update if value or brightness changed
