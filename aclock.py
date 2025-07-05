@@ -738,12 +738,12 @@ class AlarmClock:
                 dim_level = self.auto_dim_level
             elif display_mode == "MANUAL_DIM":
                 dim_level = self.manual_dim_level
-            # Only update if value or brightness or type changed
-            # 0 = off, 16 = brightest, increments of 1/16
+            # For alphanumeric display: 0 = same as 1, 1-16 = 1/16 to 1.0
             if dim_level == 0:
-                current_brightness = 0.0
+                current_brightness = 1 / 16.0
             else:
                 current_brightness = dim_level / 16.0
+            # Only update if value or brightness or type changed
             if (alpha_message != self.last_alpha_message) or (current_brightness != self.last_alpha_brightness) or (message_type != self.last_alpha_type):
                 self.alpha_display.fill(0)
                 if message_type == "FLOAT":
@@ -864,7 +864,7 @@ class AlarmClock:
             now (datetime): The current datetime.
         """
         num_message = int(now.strftime("%I"))*100+int(now.strftime("%M"))
-        # Determine current brightness
+        # Determine current brightness for numeric display
         if self.display_mode == "AUTO_DIM":
             dim_level = self.auto_dim_level
         elif self.display_mode == "MANUAL_DIM":
@@ -872,8 +872,9 @@ class AlarmClock:
         else:
             dim_level = None
         if dim_level is not None:
+            # Numeric display: 0 = off, 16 = brightest, equal increments
             if dim_level == 0:
-                # Turn off the display completely
+                # Turn off the numeric display completely
                 self.num_display.fill(0)
                 self.num_display.brightness = 0.0
                 try:
@@ -882,30 +883,35 @@ class AlarmClock:
                     self.logger.error("num_display.show() error: %s", str(e))
                 self.last_num_message = None
                 self.last_num_brightness = 0.0
-                # Also clear the alpha display for consistency
-                self.alpha_display.fill(0)
-                try:
-                    self.alpha_display.show()
-                except Exception as e:
-                    self.logger.error("alpha_display.show() error: %s", str(e))
-                return
             else:
                 current_brightness = dim_level / 16.0
+                # Only update if value or brightness changed
+                if (num_message != self.last_num_message) or (current_brightness != self.last_num_brightness):
+                    self.num_display.fill(0)
+                    self.num_display.print(str(num_message))
+                    self.num_display.brightness = current_brightness
+                    self.last_num_message = num_message
+                    self.last_num_brightness = current_brightness
+                # Always update colon and show, for blink effect
+                self.num_display.colon = now.second % 2
+                try:
+                    self.num_display.show()
+                except Exception as e:
+                    self.logger.error("num_display.show() error: %s", str(e))
         else:
             current_brightness = self.num_display.brightness
-        # Only update if value or brightness changed
-        if (num_message != self.last_num_message) or (current_brightness != self.last_num_brightness):
-            self.num_display.fill(0)
-            self.num_display.print(str(num_message))
-            self.num_display.brightness = current_brightness
-            self.last_num_message = num_message
-            self.last_num_brightness = current_brightness
-        # Always update colon and show, for blink effect
-        self.num_display.colon = now.second % 2
-        try:
-            self.num_display.show()
-        except Exception as e:
-            self.logger.error("num_display.show() error: %s", str(e))
+            if (num_message != self.last_num_message) or (current_brightness != self.last_num_brightness):
+                self.num_display.fill(0)
+                self.num_display.print(str(num_message))
+                self.num_display.brightness = current_brightness
+                self.last_num_message = num_message
+                self.last_num_brightness = current_brightness
+            self.num_display.colon = now.second % 2
+            try:
+                self.num_display.show()
+            except Exception as e:
+                self.logger.error("num_display.show() error: %s", str(e))
+        # Update the alphanumeric display
         self.update_alpha_display(now)
 
     def update_alpha_display(self, now):
