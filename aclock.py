@@ -872,23 +872,9 @@ class AlarmClock:
         else:
             dim_level = None
         if dim_level is not None:
+            # For numeric display, treat 0 as the same as 1 (minimum nonzero brightness)
             if dim_level == 0:
-                # Turn off the display completely
-                self.num_display.fill(0)
-                self.num_display.brightness = 0.0
-                try:
-                    self.num_display.show()
-                except Exception as e:
-                    self.logger.error("num_display.show() error: %s", str(e))
-                self.last_num_message = None
-                self.last_num_brightness = 0.0
-                # Also clear the alpha display for consistency
-                self.alpha_display.fill(0)
-                try:
-                    self.alpha_display.show()
-                except Exception as e:
-                    self.logger.error("alpha_display.show() error: %s", str(e))
-                return
+                current_brightness = 1 / 16.0
             else:
                 current_brightness = dim_level / 16.0
         else:
