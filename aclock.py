@@ -739,11 +739,16 @@ class AlarmClock:
                 dim_level = self.auto_dim_level
             elif display_mode == "MANUAL_DIM":
                 dim_level = self.manual_dim_level
-            # For alphanumeric display: 0 = same as 1, 1-16 = 1/16 to 1.0
+            # Custom brightness scaling: 0 = off, 1 = 2%, 2-16 = evenly divide remaining 98%
             if dim_level == 0:
-                current_brightness = 1 / 16.0
+                current_brightness = 0.0
+            elif dim_level == 1:
+                current_brightness = 0.02
             else:
-                current_brightness = dim_level / 16.0
+                # Levels 2-16: map to 2% + (level-1)*(98/15)%
+                current_brightness = 0.02 + ((dim_level - 1) * (0.98 / 15))
+                # Clamp to 1.0 max
+                current_brightness = min(current_brightness, 1.0)
             # Only update if value or brightness or type changed
             if (alpha_message != self.last_alpha_message) or (current_brightness != self.last_alpha_brightness) or (message_type != self.last_alpha_type):
                 self.alpha_display.fill(0)
@@ -751,7 +756,7 @@ class AlarmClock:
                     self.alpha_display.print(str(alpha_message))
                 elif message_type == "STR":
                     self.alpha_display.print(alpha_message)
-                print(f"dim_level: {dim_level} display_mode: {display_mode}")
+                print(f"dim_level: {dim_level} display_mode: {display_mode} brightness: {current_brightness:.3f}")
                 self.alpha_display.brightness = current_brightness
                 try:
                     self.alpha_display.show()
@@ -873,7 +878,7 @@ class AlarmClock:
         else:
             dim_level = None
         if dim_level is not None:
-            # Numeric display: 0 = off, 16 = brightest, equal increments
+            # Numeric display: 0 = off, 1 = 2%, 2-16 = evenly divide remaining 98%
             if dim_level == 0:
                 # Turn off the numeric display completely
                 self.num_display.fill(0)
@@ -884,8 +889,25 @@ class AlarmClock:
                     self.logger.error("num_display.show() error: %s", str(e))
                 self.last_num_message = None
                 self.last_num_brightness = 0.0
+            elif dim_level == 1:
+                current_brightness = 0.02
+                # Only update if value or brightness changed
+                if (num_message != self.last_num_message) or (current_brightness != self.last_num_brightness):
+                    self.num_display.fill(0)
+                    self.num_display.print(str(num_message))
+                    self.num_display.brightness = current_brightness
+                    self.last_num_message = num_message
+                    self.last_num_brightness = current_brightness
+                # Always update colon and show, for blink effect
+                self.num_display.colon = now.second % 2
+                try:
+                    self.num_display.show()
+                except Exception as e:
+                    self.logger.error("num_display.show() error: %s", str(e))
             else:
-                current_brightness = dim_level / 16.0
+                # Levels 2-16: map to 2% + (level-1)*(98/15)%
+                current_brightness = 0.02 + ((dim_level - 1) * (0.98 / 15))
+                current_brightness = min(current_brightness, 1.0)
                 # Only update if value or brightness changed
                 if (num_message != self.last_num_message) or (current_brightness != self.last_num_brightness):
                     self.num_display.fill(0)
