@@ -1,7 +1,7 @@
 # Alarm clock with LED Display
 # James S. Lucas
 # 20171118
-# 20250705
+# 20250711
 
 # I2C addresses:
 #   0x70 - 14x4 alphanumeric display
@@ -52,6 +52,8 @@ class AlarmClock:
         Initialize the AlarmClock instance, set up hardware interfaces, state variables, and load persisted settings.
         """
         # Set up logger for error logging
+        # Minimum brightness percentage for dim level 1 (e.g., 0.02 for 2%, 0.04 for 4%)
+        self.min_brightness_pct = 0.01  # Change this value to set the minimum brightness percentage
         self.logger = logging.getLogger("aclock")
         self.logger.setLevel(logging.ERROR)
         if not self.logger.handlers:
@@ -739,15 +741,16 @@ class AlarmClock:
                 dim_level = self.auto_dim_level
             elif display_mode == "MANUAL_DIM":
                 dim_level = self.manual_dim_level
-            # Custom brightness scaling: 0 = off, 1 = 2%, 2-16 = evenly divide remaining 98%
+            # Custom brightness scaling: 0 = off, 1 = min_brightness_pct, 2-16 = evenly divide remaining percentage
+            min_pct = self.min_brightness_pct
             if dim_level == 0:
                 current_brightness = 0.0
             elif dim_level == 1:
-                current_brightness = 0.02
+                current_brightness = min_pct
             else:
-                # Levels 2-16: map to 2% + (level-1)*(98/15)%
-                current_brightness = 0.02 + ((dim_level - 1) * (0.98 / 15))
-                # Clamp to 1.0 max
+                # Levels 2-16: min_pct + (level-1)*(remaining/15)
+                remaining = 1.0 - min_pct
+                current_brightness = min_pct + ((dim_level - 1) * (remaining / 15))
                 current_brightness = min(current_brightness, 1.0)
             # Only update if value or brightness or type changed
             if (alpha_message != self.last_alpha_message) or (current_brightness != self.last_alpha_brightness) or (message_type != self.last_alpha_type):
@@ -878,7 +881,8 @@ class AlarmClock:
         else:
             dim_level = None
         if dim_level is not None:
-            # Numeric display: 0 = off, 1 = 2%, 2-16 = evenly divide remaining 98%
+            # Numeric display: 0 = off, 1 = min_brightness_pct, 2-16 = evenly divide remaining percentage
+            min_pct = self.min_brightness_pct
             if dim_level == 0:
                 # Turn off the numeric display completely
                 self.num_display.fill(0)
@@ -890,7 +894,7 @@ class AlarmClock:
                 self.last_num_message = None
                 self.last_num_brightness = 0.0
             elif dim_level == 1:
-                current_brightness = 0.02
+                current_brightness = min_pct
                 # Only update if value or brightness changed
                 if (num_message != self.last_num_message) or (current_brightness != self.last_num_brightness):
                     self.num_display.fill(0)
@@ -905,8 +909,9 @@ class AlarmClock:
                 except Exception as e:
                     self.logger.error("num_display.show() error: %s", str(e))
             else:
-                # Levels 2-16: map to 2% + (level-1)*(98/15)%
-                current_brightness = 0.02 + ((dim_level - 1) * (0.98 / 15))
+                # Levels 2-16: min_pct + (level-1)*(remaining/15)
+                remaining = 1.0 - min_pct
+                current_brightness = min_pct + ((dim_level - 1) * (remaining / 15))
                 current_brightness = min(current_brightness, 1.0)
                 # Only update if value or brightness changed
                 if (num_message != self.last_num_message) or (current_brightness != self.last_num_brightness):
