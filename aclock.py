@@ -384,6 +384,13 @@ class AlarmClock:
         if channel != 1:
             return
         if self.display_settings_state == 1:
+            # If numeric display is off (manual_dim_level==0), set to 1 and do NOT enter display settings mode
+            if self.manual_dim_level == 0:
+                debug_lines.append("display_settings_callback: Numeric display is off, setting dim level to 1 (do not enter display mode)")
+                self.manual_dim_level = 1
+                self.save_settings()
+                print("\n".join(debug_lines), end="\n")
+                return
             debug_lines.append("display_settings_callback: Entering display mode")
             # Cancel alarm settings mode if active
             if self.alarm_settings_state == 2:
