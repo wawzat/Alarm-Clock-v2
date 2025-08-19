@@ -343,30 +343,37 @@ class AlarmClock:
             self.alarm_ringing = 0
             self.alarm_stat = "OFF"
             self.sleep_state = "OFF"
-        elif self.alarm_settings_state == 1:
-            debug_lines.append("alarm_settings_callback: Entering alarm settings mode")
-            self.alarm_settings_state = 2
-            self.alarm_set = 1
-            # Cancel display settings mode if active
-            if self.display_settings_state == 2:
-                debug_lines.append("alarm_settings_callback: Cancelling display settings mode")
-                self.display_settings_state = 1
-                self.display_set = 1
-                self.clear_alpha_display()
-        elif self.alarm_settings_state == 2:
-            debug_lines.append("alarm_settings_callback: Exiting alarm settings mode")
-            self.alarm_settings_state = 1
-            self.alpha_display.fill(0)
-            try:
-                self.alpha_display.show()
-            except Exception as e:
-                self.logger.error("alpha_display.show() error: %s", str(e))
-        # Reset display cache to force refresh
-        self.last_num_message = None
-        self.last_num_brightness = None
-        self.last_alpha_message = None
-        self.last_alpha_brightness = None
-        self.last_alpha_type = None
+        if self.display_settings_state == 1:
+            # If numeric display is off (manual_dim_level==0), set to 1 and do NOT enter display settings mode
+            if self.manual_dim_level == 0:
+                debug_lines.append("display_settings_callback: Numeric display is off, setting dim level to 1 (do not enter display mode)")
+                self.manual_dim_level = 1
+                self.display_mode = "MANUAL_DIM"  # Ensure display mode is set to manual dim
+                self.save_settings()
+                # Immediately update numeric display so it turns on
+                self.update_main_display(self.get_time())
+                print("\n".join(debug_lines), end="\n")
+                return
+            debug_lines.append("display_settings_callback: Entering display mode")
+            # Cancel alarm settings mode if active
+            if self.alarm_settings_state == 2:
+                pass
+            if self.alarm_ringing == 1:
+                pass
+            # Always reset display_settings_state and display_set when entering display settings
+            self.display_settings_state = 2
+            self.display_set = 1
+            self.clear_alpha_display()  # Clear display when entering display mode
+            self.save_settings()
+            # Reset display cache to force refresh
+            self.last_num_message = None
+            self.last_num_brightness = None
+            self.last_alpha_message = None
+            self.last_alpha_brightness = None
+            self.last_alpha_type = None
+            debug_lines.append(f"display_settings_callback exit: display_state={self.display_settings_state}, alarm_set={self.alarm_set}, aux_set={self.display_set}")
+            print("\n".join(debug_lines), end="\n")
+            return
         debug_lines.append(f"alarm_settings_callback exit: alarm_state={self.alarm_settings_state}, display_state={self.display_settings_state}, alarm_set={self.alarm_set}")
         print("\n".join(debug_lines), end="\n")
         return
