@@ -346,12 +346,18 @@ class AlarmClock:
         if self.display_settings_state == 1:
             # If numeric display is off (manual_dim_level==0), set to 1 and do NOT enter display settings mode
             if self.manual_dim_level == 0:
-                debug_lines.append("display_settings_callback: Numeric display is off, setting dim level to 1 (do not enter display mode)")
+                debug_lines.append("display_settings_callback: Numeric display is off, forcing display ON and setting dim level to 1 (do not enter display mode)")
                 self.manual_dim_level = 1
-                self.display_mode = "MANUAL_DIM"  # Ensure display mode is set to manual dim
+                self.display_mode = "MANUAL_DIM"
+                self.display_override = "ON"  # Force override ON
                 self.save_settings()
                 # Immediately update numeric display so it turns on
                 self.update_main_display(self.get_time())
+                # Directly set numeric display brightness to ensure it turns on
+                try:
+                    self.num_display.brightness = self.manual_dim_level if self.manual_dim_level > 0 else 1
+                except Exception as e:
+                    self.logger.error(f"Error setting numeric display brightness: {e}")
                 print("\n".join(debug_lines), end="\n")
                 return
             debug_lines.append("display_settings_callback: Entering display mode")
