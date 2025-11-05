@@ -111,9 +111,24 @@ class AlarmClock:
         # Audio feature flag
         self.use_audio = True  # Set to True to enable audio features
         if self.use_audio:
-            import pygame
-            pygame.mixer.init()
-            self.mixer = pygame.mixer
+            # Initialize pygame mixer with a larger buffer to avoid ALSA underrun errors.
+            # Wrap in try/except and disable audio on failure.
+            try:
+                import pygame
+                # Ensure any existing mixer is closed
+                try:
+                    pygame.mixer.quit()
+                except Exception:
+                    pass
+                # Increase buffer (default often 4096) to reduce underruns on some systems
+                pygame.mixer.init(buffer=8192)
+                self.mixer = pygame.mixer
+                self.use_audio = True
+            except Exception as e:
+                self.logger.error("Audio init failed: %s", str(e))
+                self.use_audio = False
+        else:
+            self.mixer = None
 
         # Define increment for alarm minute adjustment
         self.minute_incr = 1
