@@ -8,7 +8,7 @@ runs your alarm clock):
 
 Example crontab entry (edit with `crontab -e`):
 
-@reboot /usr/bin/python3 /home/pi/Alarm-Clock-v2/turn_off_button_leds.py >/home/pi/turn_off_button_leds.log 2>&1
+@reboot /home/pi/Alarm-Clock-v2/turn_off_button_leds.sh >/home/pi/turn_off_button_leds.log 2>&1
 
 Notes:
 - Adjust the path to the repository above to match where you placed it on the
@@ -18,3 +18,15 @@ Notes:
 - If you'd prefer a systemd service instead of cron, create a small unit that
   runs the script at boot and enable it; this can be more reliable on some
   systems.
+
+Notes about the wrapper script
+
+- The repo contains a small wrapper `turn_off_button_leds.sh` that executes the
+  Python script and sends logs to `/var/log`. Make the wrapper executable after
+  you copy the repository to the Pi:
+
+  chmod +x /home/pi/Alarm-Clock-v2/turn_off_button_leds.sh
+
+- The wrapper uses `/usr/bin/python3` and assumes the repository is at
+  `/home/pi/Alarm-Clock-v2`; update the paths in the `.sh` file if your layout
+  differs.
