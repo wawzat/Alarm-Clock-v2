@@ -30,3 +30,19 @@ Notes about the wrapper script
 - The wrapper uses `/usr/bin/python3` and assumes the repository is at
   `/home/pi/Alarm-Clock-v2`; update the paths in the `.sh` file if your layout
   differs.
+
+Virtual environment support
+
+- If you installed the project's Python dependencies into a virtual
+  environment inside the repository (recommended), the wrapper will attempt
+  to use that venv's Python automatically. It looks for Python at these
+  locations inside the repo (in order): `.venv/bin/python`, `venv/bin/python`,
+  `env/bin/python`, `.env/bin/python`.
+
+- To create and use a venv inside the repo on the Pi, run (from the repo root):
+
+  python3 -m venv .venv
+  . .venv/bin/activate
+  pip install -r requirements.txt
+
+  Then make the wrapper executable and add the cron entry as shown above.
