@@ -65,7 +65,7 @@ class AlarmClock:
         self.i2c = busio.I2C(board.SCL, board.SDA)
 
         # Initialize I2C for Arcade Button 1x4 (address 0x3A)
-        self.last_state = [True, True]  # True means not pressed (pull-up)
+        self.last_state = [False, False]  # False means not pressed, True means pressed
         self.last_press = [0, 0]
         self.debounce_time = 0.21  # 210 ms debounce
         ARCADE_BUTTON_ADDR = 0x3A
@@ -658,7 +658,7 @@ class AlarmClock:
         now = time.monotonic()
         for idx, btn in enumerate(self.arcade_buttons):
             pressed = not btn.value # Button is active low: pressed == False
-            if pressed and self.last_state[idx]:  # Button down event
+            if pressed and not self.last_state[idx]:  # Button down event (edge detection)
                 if now - self.last_press[idx] > self.debounce_time:
                     # Turn off alarm if ringing or snoozed
                     if self.alarm_ringing == 1 or self.sleep_state == "ON":
