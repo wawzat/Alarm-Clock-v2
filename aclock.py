@@ -594,60 +594,68 @@ class AlarmClock:
         """
         Poll the I2C rotary encoder for position and button events, and handle alarm/display settings accordingly.
         """
-        position = self.encoder.position
-        button = self.encoder_button.value
-        # Detect rotation
-        if position != self.last_encoder_position:
-            direction = 'CLOCKWISE' if position > self.last_encoder_position else 'ANTICLOCKWISE'
-            if self.alarm_settings_state == 2:
-                update_time = False
-                if direction == 'CLOCKWISE':
-                    if self.alarm_set in self.clockwise_alarm_actions:
-                        result = self.clockwise_alarm_actions[self.alarm_set]()
-                        if result:
-                            update_time = True
-                else:
-                    if self.alarm_set in self.anticlockwise_alarm_actions:
-                        result = self.anticlockwise_alarm_actions[self.alarm_set]()
-                        if result:
-                            update_time = True
-                if update_time:
-                    self.alarm_time = dt.strptime(f"{self.alarm_hour}:{self.alarm_minute} {self.period}", "%I:%M %p")
-            elif self.display_settings_state == 2:
-                action = None
-                if direction == 'CLOCKWISE':
-                    action = self.clockwise_display_actions.get(self.display_set)
-                else:
-                    action = self.anticlockwise_display_actions.get(self.display_set)
-                if action:
-                    action()
-                if self.alarm_ringing == 0 and (self.display_mode == "MANUAL_OFF" or self.display_mode == "AUTO_OFF"):
-                    self.display_mode = "ON"
-                    self.display_override = "ON"
-                    self.display_settings_state = 1
-                elif self.alarm_ringing == 1 and self.sleep_state == "OFF":
-                    self.alarm_ringing = 0
-                    self.alarm_time = self.alarm_time + datetime.timedelta(minutes=1)
-                    self.sleep_state = "ON"
-                elif self.alarm_ringing == 0 and self.sleep_state == "ON":
-                    self.alarm_stat = "OFF"
-                    self.sleep_state = "OFF"
-            self.save_settings()
-            self.last_encoder_position = position
-        # Detect button press/release
-        if not button and self.last_encoder_button:  # Button down
-            self.encoder_button_down = True
-        elif button and not self.last_encoder_button:  # Button up
-            self.encoder_button_up = True
-        # Handle button events
-        if self.encoder_button_down:
-            if self.alarm_settings_state == 2:
-                self.alarm_set = (self.alarm_set % 6) + 1
-            elif self.display_settings_state == 2:
-                self.display_set = (self.display_set % 2) + 1
-            self.save_settings()
-            self.encoder_button_down = False
-        self.last_encoder_button = button
+        try:
+            position = self.encoder.position
+            button = self.encoder_button.value
+        except Exception as e:
+            self.logger.error("Failed to read rotary encoder: %s", str(e))
+            return
+        
+        try:
+            # Detect rotation
+            if position != self.last_encoder_position:
+                direction = 'CLOCKWISE' if position > self.last_encoder_position else 'ANTICLOCKWISE'
+                if self.alarm_settings_state == 2:
+                    update_time = False
+                    if direction == 'CLOCKWISE':
+                        if self.alarm_set in self.clockwise_alarm_actions:
+                            result = self.clockwise_alarm_actions[self.alarm_set]()
+                            if result:
+                                update_time = True
+                    else:
+                        if self.alarm_set in self.anticlockwise_alarm_actions:
+                            result = self.anticlockwise_alarm_actions[self.alarm_set]()
+                            if result:
+                                update_time = True
+                    if update_time:
+                        self.alarm_time = dt.strptime(f"{self.alarm_hour}:{self.alarm_minute} {self.period}", "%I:%M %p")
+                elif self.display_settings_state == 2:
+                    action = None
+                    if direction == 'CLOCKWISE':
+                        action = self.clockwise_display_actions.get(self.display_set)
+                    else:
+                        action = self.anticlockwise_display_actions.get(self.display_set)
+                    if action:
+                        action()
+                    if self.alarm_ringing == 0 and (self.display_mode == "MANUAL_OFF" or self.display_mode == "AUTO_OFF"):
+                        self.display_mode = "ON"
+                        self.display_override = "ON"
+                        self.display_settings_state = 1
+                    elif self.alarm_ringing == 1 and self.sleep_state == "OFF":
+                        self.alarm_ringing = 0
+                        self.alarm_time = self.alarm_time + datetime.timedelta(minutes=1)
+                        self.sleep_state = "ON"
+                    elif self.alarm_ringing == 0 and self.sleep_state == "ON":
+                        self.alarm_stat = "OFF"
+                        self.sleep_state = "OFF"
+                self.save_settings()
+                self.last_encoder_position = position
+            # Detect button press/release
+            if not button and self.last_encoder_button:  # Button down
+                self.encoder_button_down = True
+            elif button and not self.last_encoder_button:  # Button up
+                self.encoder_button_up = True
+            # Handle button events
+            if self.encoder_button_down:
+                if self.alarm_settings_state == 2:
+                    self.alarm_set = (self.alarm_set % 6) + 1
+                elif self.display_settings_state == 2:
+                    self.display_set = (self.display_set % 2) + 1
+                self.save_settings()
+                self.encoder_button_down = False
+            self.last_encoder_button = button
+        except Exception as e:
+            self.logger.error("Error in rotary encoder handling: %s", str(e))
 
     def poll_arcade_buttons(self):
         """
@@ -655,44 +663,65 @@ class AlarmClock:
         Switch 1 (yellow): Display settings, Switch 2 (white): Alarm settings.
         Also turns off a ringing or snoozed alarm when either button is pressed.
         """
-        now = time.monotonic()
-        for idx, btn in enumerate(self.arcade_buttons):
-            pressed = not btn.value # Button is active low: pressed == False
-            if pressed and not self.last_state[idx]:  # Button down event (edge detection)
-                if now - self.last_press[idx] > self.debounce_time:
-                    # Turn off alarm if ringing or snoozed
-                    if self.alarm_ringing == 1 or self.sleep_state == "ON":
-                        self.alarm_ringing = 0
-                        self.alarm_stat = "OFF"
-                        self.sleep_state = "OFF"
-                        # Immediately clear only the alphanumeric display to stop RING, but do NOT show it or clear the numeric display
-                        self.alpha_display.fill(0)
+        try:
+            now = time.monotonic()
+            for idx, btn in enumerate(self.arcade_buttons):
+                pressed = False  # Default to not pressed if read fails
+                try:
+                    pressed = not btn.value # Button is active low: pressed == False
+                except Exception as e:
+                    self.logger.error("Failed to read button %d: %s", idx, str(e))
+                    # Continue with pressed=False to maintain state consistency
+                
+                if pressed and not self.last_state[idx]:  # Button down event (edge detection)
+                    if now - self.last_press[idx] > self.debounce_time:
+                        # Turn off alarm if ringing or snoozed
+                        if self.alarm_ringing == 1 or self.sleep_state == "ON":
+                            self.alarm_ringing = 0
+                            self.alarm_stat = "OFF"
+                            self.sleep_state = "OFF"
+                            # Immediately clear only the alphanumeric display to stop RING, but do NOT show it or clear the numeric display
+                            self.alpha_display.fill(0)
+                            try:
+                                self.alpha_display.show()
+                            except Exception as e:
+                                self.logger.error("alpha_display.show() error: %s", str(e))
+                        else:
+                            if idx == 0:
+                                # Switch 1 (yellow): Display settings
+                                self.display_settings_callback(1)
+                                try:
+                                    self.arcade_leds[0].value = True  # Turn on yellow LED
+                                except Exception as e:
+                                    self.logger.error("Failed to set LED %d: %s", 0, str(e))
+                            elif idx == 1:
+                                # Switch 2 (white): Alarm settings
+                                self.alarm_settings_callback(1)
+                                try:
+                                    self.arcade_leds[1].value = True  # Turn on white LED
+                                except Exception as e:
+                                    self.logger.error("Failed to set LED %d: %s", 1, str(e))
+                        # Set max brightness for each button LED
+                        max_brightness = 65535 if idx == 0 else 20000  # Lower for alarm settings button
+                        # Gradually increase and decrease brightness for visual feedback
                         try:
-                            self.alpha_display.show()
+                            for cycle in range(0, max_brightness, 8000):
+                                self.arcade_leds[idx].duty_cycle = cycle
+                                time.sleep(0.002)
+                            for cycle in range(max_brightness - 1, 0, -8000):
+                                self.arcade_leds[idx].duty_cycle = cycle
+                                time.sleep(0.002)
                         except Exception as e:
-                            self.logger.error("alpha_display.show() error: %s", str(e))
-                    else:
-                        if idx == 0:
-                            # Switch 1 (yellow): Display settings
-                            self.display_settings_callback(1)
-                            self.arcade_leds[0].value = True  # Turn on yellow LED
-                        elif idx == 1:
-                            # Switch 2 (white): Alarm settings
-                            self.alarm_settings_callback(1)
-                            self.arcade_leds[1].value = True  # Turn on white LED
-                    # Set max brightness for each button LED
-                    max_brightness = 65535 if idx == 0 else 20000  # Lower for alarm settings button
-                    # Gradually increase and decrease brightness for visual feedback
-                    for cycle in range(0, max_brightness, 8000):
-                        self.arcade_leds[idx].duty_cycle = cycle
-                        time.sleep(0.002)
-                    for cycle in range(max_brightness - 1, 0, -8000):
-                        self.arcade_leds[idx].duty_cycle = cycle
-                        time.sleep(0.002)
-                self.last_press[idx] = now
-            elif not pressed:
-                self.arcade_leds[idx].duty_cycle = 0  # Turn off LED
-            self.last_state[idx] = pressed
+                            self.logger.error("Failed to set LED brightness for %d: %s", idx, str(e))
+                    self.last_press[idx] = now
+                elif not pressed:
+                    try:
+                        self.arcade_leds[idx].duty_cycle = 0  # Turn off LED
+                    except Exception as e:
+                        self.logger.error("Failed to turn off LED %d: %s", idx, str(e))
+                self.last_state[idx] = pressed
+        except Exception as e:
+            self.logger.error("poll_arcade_buttons error: %s", str(e))
 
     def brightness(self, auto_dim, alarm_stat, display_mode, now):
         """
@@ -1067,7 +1096,11 @@ class AlarmClock:
         """
         try:
             while True:
-                self.main_loop_iteration()
+                try:
+                    self.main_loop_iteration()
+                except Exception as e:
+                    self.logger.error("Error in main_loop_iteration: %s", str(e))
+                    # Continue running despite errors
                 time.sleep(0.02)
         except KeyboardInterrupt:
             self.alpha_display.fill(0)
