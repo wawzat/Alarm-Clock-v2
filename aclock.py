@@ -909,6 +909,9 @@ class AlarmClock:
                 while self.loop_count <= 100:
                     now = self.get_time()
                     self.update_main_display(now)
+                    # Poll buttons during gesture wake loop
+                    self.poll_arcade_buttons()
+                    self.poll_rotary_encoder()
                     time.sleep(.03)
                     self.loop_count += 1
                 # Restore previous off mode
