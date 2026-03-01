@@ -901,27 +901,28 @@ class AlarmClock:
             gesture = None
         # 0x03 = left (right-to-left), 0x04 = right (left-to-right)
         if gesture in (0x03, 0x04):
-            # Wake display if off
-            if self.display_override == "OFF" and (self.display_mode == "AUTO_OFF" or self.display_mode == "MANUAL_OFF"):
-                self.loop_count = 0
-                self.display_mode = "AUTO_DIM"
-                self.display_override = "ON"
-                while self.loop_count <= 100:
-                    now = self.get_time()
-                    self.update_main_display(now)
-                    # Poll buttons during gesture wake loop
-                    self.poll_arcade_buttons()
-                    self.poll_rotary_encoder()
-                    time.sleep(.03)
-                    self.loop_count += 1
-                # Restore previous off mode
-                if self.display_mode == "AUTO_DIM":
-                    self.display_mode = "AUTO_OFF"
-                else:
-                    self.display_mode = "MANUAL_OFF"
-                self.display_override = "OFF"
-            # Turn off alarm if snoozed (sleep_state == "ON")
-            if self.sleep_state == "ON":
+            # Wake display if off - only on right gesture (left-to-right) to avoid continuous proximity triggers
+            if gesture == 0x04:
+                if self.display_override == "OFF" and (self.display_mode == "AUTO_OFF" or self.display_mode == "MANUAL_OFF"):
+                    self.display_mode = "AUTO_DIM"
+                    self.display_override = "ON"
+                    gesture_wake_start = time.time()
+                    # Max 3 second wake loop to allow button presses to be processed
+                    while time.time() - gesture_wake_start < 3.0:
+                        now = self.get_time()
+                        self.update_main_display(now)
+                        # Poll buttons during gesture wake loop
+                        self.poll_arcade_buttons()
+                        self.poll_rotary_encoder()
+                        time.sleep(.03)
+                    # Restore previous off mode
+                    if self.display_mode == "AUTO_DIM":
+                        self.display_mode = "AUTO_OFF"
+                    else:
+                        self.display_mode = "MANUAL_OFF"
+                    self.display_override = "OFF"
+            # Turn off alarm if snoozed (sleep_state == "ON") - only on left gesture
+            elif gesture == 0x03 and self.sleep_state == "ON":
                 print("Gesture detected: turning off snoozed alarm!")
                 self.alarm_ringing = 0
                 self.alarm_stat = "OFF"
