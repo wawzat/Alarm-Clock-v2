@@ -904,23 +904,35 @@ class AlarmClock:
             # Wake display if off - only on right gesture (left-to-right) to avoid continuous proximity triggers
             if gesture == 0x04:
                 if self.display_override == "OFF" and (self.display_mode == "AUTO_OFF" or self.display_mode == "MANUAL_OFF"):
+                    # Remember state before temporary wake
+                    original_mode = self.display_mode
+                    original_override = self.display_override
+                    original_alarm_settings_state = self.alarm_settings_state
+                    original_display_settings_state = self.display_settings_state
+
                     self.display_mode = "AUTO_DIM"
                     self.display_override = "ON"
                     gesture_wake_start = time.time()
+
                     # Max 3 second wake loop to allow button presses to be processed
                     while time.time() - gesture_wake_start < 3.0:
                         now = self.get_time()
                         self.update_main_display(now)
-                        # Poll buttons during gesture wake loop
+                        # Poll inputs during gesture wake loop
                         self.poll_arcade_buttons()
                         self.poll_rotary_encoder()
                         time.sleep(.03)
-                    # Restore previous off mode
-                    if self.display_mode == "AUTO_DIM":
-                        self.display_mode = "AUTO_OFF"
-                    else:
-                        self.display_mode = "MANUAL_OFF"
-                    self.display_override = "OFF"
+
+                    # Keep wake state if user interacted; otherwise restore previous OFF state
+                    user_interacted = (
+                        self.alarm_settings_state != original_alarm_settings_state
+                        or self.display_settings_state != original_display_settings_state
+                        or self.alarm_ringing == 1
+                        or self.sleep_state == "ON"
+                    )
+                    if not user_interacted and self.display_override == "ON" and self.display_mode == "AUTO_DIM":
+                        self.display_mode = original_mode
+                        self.display_override = original_override
             # Turn off alarm if snoozed (sleep_state == "ON") - only on left gesture
             elif gesture == 0x03 and self.sleep_state == "ON":
                 print("Gesture detected: turning off snoozed alarm!")
