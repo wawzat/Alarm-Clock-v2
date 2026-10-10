@@ -210,6 +210,17 @@ class AlarmClock:
         """
         return dt.now()
 
+    def get_colon_state(self, now):
+        """
+        Return the colon state (0/1): toggles every 1s for seconds 0-49, every 0.5s for 50-54, every 0.25s for 55-59.
+        """
+        t = now.second + now.microsecond / 1e6
+        if t < 50:
+            return int(t) % 2
+        if t < 55:
+            return int(t * 2) % 2
+        return int(t * 4) % 2
+
     def set_gesture_sensor_state(self, enable):
         """
         Enable or disable the APDS9960 proximity and gesture sensor.
@@ -256,7 +267,7 @@ class AlarmClock:
                 self.alpha_display.show()
                 now = self.get_time()
                 num_message = int(now.strftime("%I"))*100+int(now.strftime("%M"))
-                colon_state = now.second % 2
+                colon_state = self.get_colon_state(now)
                 # Only update numeric display if value or colon changed
                 if (num_message != last_num_message) or (colon_state != last_colon):
                     self.num_display.fill(0)
@@ -983,7 +994,7 @@ class AlarmClock:
                     self.last_num_message = num_message
                     self.last_num_brightness = current_brightness
                 # Always update colon and show, for blink effect
-                self.num_display.colon = now.second % 2
+                self.num_display.colon = self.get_colon_state(now)
                 try:
                     self.num_display.show()
                 except Exception as e:
@@ -1001,7 +1012,7 @@ class AlarmClock:
                     self.last_num_message = num_message
                     self.last_num_brightness = current_brightness
                 # Always update colon and show, for blink effect
-                self.num_display.colon = now.second % 2
+                self.num_display.colon = self.get_colon_state(now)
                 try:
                     self.num_display.show()
                 except Exception as e:
@@ -1014,7 +1025,7 @@ class AlarmClock:
                 self.num_display.brightness = current_brightness
                 self.last_num_message = num_message
                 self.last_num_brightness = current_brightness
-            self.num_display.colon = now.second % 2
+            self.num_display.colon = self.get_colon_state(now)
             try:
                 self.num_display.show()
             except Exception as e:
